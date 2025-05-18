@@ -1,27 +1,45 @@
 #include <iostream>
 #include "Archivos.h"
 #include "Anfitrion.h"
-
-using namespace std;
+#include "huesped.h"
+#include "alojamiento.h"
 
 int main() {
+    // Primero carga anfitriones (suponiendo que ya funciona)
     Anfitrion** anfitriones = nullptr;
     int cantidadAnfitriones = 0;
-
-    // 1) Llama a tu método de carga
     Archivo::cargarAnfitriones(anfitriones, cantidadAnfitriones);
 
-    // 2) Valida que hayan llegado datos
-    cout << "Cantidad de anfitriones cargados: "
-         << cantidadAnfitriones << "\n";
+    // Ahora carga alojamientos
+    Alojamiento** alojamientos = nullptr;
+    int cantidadAlojamientos = 0;
+    Archivo::cargarAlojamientos(alojamientos,
+                                cantidadAlojamientos,
+                                anfitriones,
+                                cantidadAnfitriones);
 
-    for (int i = 0; i < cantidadAnfitriones; ++i) {
-        cout << "- Documento: "   << anfitriones[i]->getDocumento()
-        << " | Antigüedad: " << anfitriones[i]->getAntiguedad()
-        << " | Puntuación: "  << anfitriones[i]->getPuntuacion() << "\n";
+    // Validación
+    cout << "Cantidad de alojamientos cargados: "
+         << cantidadAlojamientos << "\n\n";
+
+    for (int i = 0; i < cantidadAlojamientos; ++i) {
+        auto a = alojamientos[i];
+        cout << "- Código: "     << a->getCodigo()
+             << " | Nombre: "    << a->getNombre()
+             << " | Anfitrión: " << a->getAnfitrion()->getDocumento()
+             << " | Precio: "    << a->getPrecioPorNoche()
+             << " | Amenidades: ";
+        for (int j = 0; j < a->getCantidadAmenidades(); ++j) {
+            cout << a->getAmenidades()[j]
+                 << (j+1 < a->getCantidadAmenidades() ? ", " : "");
+        }
+        cout << "\n";
     }
 
-    // 3) Liberar memoria
+    // Liberar memoria
+    for (int i = 0; i < cantidadAlojamientos; ++i)
+        delete alojamientos[i];
+    delete[] alojamientos;
     for (int i = 0; i < cantidadAnfitriones; ++i)
         delete anfitriones[i];
     delete[] anfitriones;
