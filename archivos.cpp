@@ -2,14 +2,32 @@
 #include "huesped.h"
 #include "anfitrion.h"
 #include "alojamiento.h"
+#include "reservacion.h"
+#include "fecha.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
+using namespace std;
+
+// Utilidad para partir cadenas
+string* Archivo::split(const string& str, char delimitador, int& totalPartes) {
+    totalPartes = 0;
+    stringstream ss(str);
+    string parte;
+    // Reserva espacio para hasta 20 tokens
+    string* resultado = new string[20];
+    while (getline(ss, parte, delimitador) && totalPartes < 20) {
+        resultado[totalPartes++] = parte;
+    }
+    return resultado;
+}
+
+// Carga de huéspedes
 void Archivo::cargarHuespedes(Huesped**& huespedes, int& cantidad) {
-    ifstream archivo("C:\\Users\\Administrator\\Desktop\\desafio2\\desafio_2\\build\\Desktop_Qt_6_8_2_MinGW_64_bit-Debug\\huespedes.txt");
+    ifstream archivo("huespedes.txt");
     if (!archivo.is_open()) {
-        cerr << "Error al abrir huespedes.txt" << endl;
+        cerr << "Error al abrir huespedes.txt\n";
         cantidad = 0;
         huespedes = nullptr;
         return;
@@ -22,35 +40,33 @@ void Archivo::cargarHuespedes(Huesped**& huespedes, int& cantidad) {
 
     while (getline(archivo, linea)) {
         if (linea.empty() || linea[0] == '#') continue;
+        int nTokens = 0;
+        string* tokens = split(linea, '|', nTokens);
+        if (nTokens < 3) { delete[] tokens; continue; }
 
-        stringstream ss(linea);
-        string doc;
-        int antig;
-        float punt;
-
-        getline(ss, doc, '|');
-        ss >> antig;
-        ss.ignore(); // ignorar '|'
-        ss >> punt;
+        string doc = tokens[0];
+        int antig    = stoi(tokens[1]);
+        float punt   = stof(tokens[2]);
+        delete[] tokens;
 
         if (cantidad == capacidad) {
             capacidad *= 2;
-            Huesped** nuevo = new Huesped*[capacidad];
-            for (int i = 0; i < cantidad; ++i)
-                nuevo[i] = huespedes[i];
+            Huesped** tmp = new Huesped*[capacidad];
+            for (int i = 0; i < cantidad; ++i) tmp[i] = huespedes[i];
             delete[] huespedes;
-            huespedes = nuevo;
+            huespedes = tmp;
         }
-
         huespedes[cantidad++] = new Huesped(doc, antig, punt);
     }
 
     archivo.close();
 }
+
+// Carga de anfitriones
 void Archivo::cargarAnfitriones(Anfitrion**& anfitriones, int& cantidad) {
     ifstream archivo("anfitriones.txt");
     if (!archivo.is_open()) {
-        cerr << "Error al abrir anfitriones.txt" << endl;
+        cerr << "Error al abrir anfitriones.txt\n";
         cantidad = 0;
         anfitriones = nullptr;
         return;
@@ -63,20 +79,16 @@ void Archivo::cargarAnfitriones(Anfitrion**& anfitriones, int& cantidad) {
 
     while (getline(archivo, linea)) {
         if (linea.empty() || linea[0] == '#') continue;
+        int nTokens = 0;
+        string* tokens = split(linea, '|', nTokens);
+        if (nTokens < 4) { delete[] tokens; continue; }
 
-        int campos = 0;
-        string* tokens = split(linea, '|', campos);
-        if (campos < 4) {
-            delete[] tokens;
-            continue;
-        }
+        string doc = tokens[0];
+        int antig  = stoi(tokens[1]);
+        float punt = stof(tokens[2]);
 
-        string doc    = tokens[0];
-        int antig     = stoi(tokens[1]);
-        float punt    = stof(tokens[2]);
-
-        int numCods = 0;
-        string* cods = split(tokens[3], ',', numCods);
+        int nCods = 0;
+        string* cods = split(tokens[3], ',', nCods);
         delete[] tokens;
 
         if (cantidad == capacidad) {
@@ -86,28 +98,14 @@ void Archivo::cargarAnfitriones(Anfitrion**& anfitriones, int& cantidad) {
             delete[] anfitriones;
             anfitriones = tmp;
         }
-
-        anfitriones[cantidad++] = new Anfitrion(doc, antig, punt, cods, numCods);
+        anfitriones[cantidad++] = new Anfitrion(doc, antig, punt, cods, nCods);
         delete[] cods;
     }
 
     archivo.close();
 }
 
-
-string* Archivo::split(const string& str, char delimitador, int& totalPartes) {
-    totalPartes = 0;
-    stringstream ss(str);
-    string parte;
-    string* resultado = new string[10];
-
-    while (getline(ss, parte, delimitador) && totalPartes < 10) {
-        resultado[totalPartes++] = parte;
-    }
-
-    return resultado;
-}
-
+// Carga de alojamientos
 void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
                                  int& cantidad,
                                  Anfitrion** anfitriones,
@@ -115,7 +113,7 @@ void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
 {
     ifstream archivo("alojamientos.txt");
     if (!archivo.is_open()) {
-        cerr << "Error al abrir alojamientos.txt" << endl;
+        cerr << "Error al abrir alojamientos.txt\n";
         cantidad = 0;
         alojamientos = nullptr;
         return;
@@ -128,31 +126,23 @@ void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
 
     while (getline(archivo, linea)) {
         if (linea.empty() || linea[0] == '#') continue;
+        int nTokens = 0;
+        string* tokens = split(linea, '|', nTokens);
+        if (nTokens < 9) { delete[] tokens; continue; }
 
-        int nCampos = 0;
-        string* tokens = split(linea, '|', nCampos);
-        if (nCampos < 9) { delete[] tokens; continue; }
+        string codigo    = tokens[0];
+        string nombre    = tokens[1];
+        string docAnf    = tokens[2];
+        string depto     = tokens[3];
+        string municipio = tokens[4];
+        string tipo      = tokens[5];
+        string direccion = tokens[6];
+        float precio     = stof(tokens[7]);
 
-        // Campos:
-        // 0: código
-        // 1: nombre
-        // 2: documento anfitrión
-        // 3: departamento
-        // 4: municipio
-        // 5: tipo
-        // 6: dirección
-        // 7: precio
-        // 8: amenidades CSV
-        string codigo       = tokens[0];
-        string nombre       = tokens[1];
-        string docAnf       = tokens[2];
-        string depto        = tokens[3];
-        string municipio    = tokens[4];
-        string tipo         = tokens[5];
-        string direccion    = tokens[6];
-        float precio        = stof(tokens[7]);
+        int nAmen = 0;
+        string* amenList = split(tokens[8], ',', nAmen);
+        delete[] tokens;
 
-        // buscar puntero a anfitrión
         Anfitrion* anfit = nullptr;
         for (int i = 0; i < cantidadAnfitriones; ++i) {
             if (anfitriones[i]->getDocumento() == docAnf) {
@@ -161,13 +151,6 @@ void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
             }
         }
 
-        // partir amenidades
-        int nAmen = 0;
-        string* amenList = split(tokens[8], ',', nAmen);
-
-        delete[] tokens;
-
-        // asegurar capacidad
         if (cantidad == capacidad) {
             capacidad *= 2;
             Alojamiento** tmp = new Alojamiento*[capacidad];
@@ -175,16 +158,158 @@ void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
             delete[] alojamientos;
             alojamientos = tmp;
         }
-
-        // crear objeto
-        alojamientos[cantidad++] =
-            new Alojamiento(codigo, nombre, tipo, direccion,
-                            depto, municipio, precio,
-                            amenList, nAmen,
-                            anfit);
-
+        alojamientos[cantidad++] = new Alojamiento(
+            codigo, nombre, tipo, direccion,
+            depto, municipio, precio,
+            amenList, nAmen,
+            anfit
+            );
         delete[] amenList;
     }
 
     archivo.close();
 }
+
+// Carga de reservas vigentes
+void Archivo::cargarReservasVigentes(Reservacion**& reservas,
+                                     int& cantidad,
+                                     Alojamiento** alojamientos,
+                                     int cantidadAloj,
+                                     Huesped** huespedes,
+                                     int cantidadHues)
+{
+    ifstream archivo("reservas_vigentes.txt");
+    if (!archivo.is_open()) {
+        cerr << "Error al abrir reservas_vigentes.txt\n";
+        cantidad = 0;
+        reservas = nullptr;
+        return;
+    }
+
+    string linea;
+    int capacidad = 10;
+    cantidad = 0;
+    reservas = new Reservacion*[capacidad];
+
+    while (getline(archivo, linea)) {
+        if (linea.empty() || linea[0] == '#') continue;
+        int nTokens = 0;
+        string* tokens = split(linea, '|', nTokens);
+        if (nTokens < 9) { delete[] tokens; continue; }
+
+        string codRes    = tokens[0];
+        string codAloj   = tokens[1];
+        string docHues   = tokens[2];
+        string strFechaE = tokens[3];
+        int duracion     = stoi(tokens[4]);
+        string metPago   = tokens[5];
+        string strFechaP = tokens[6];
+        float monto      = stof(tokens[7]);
+        string anotacion = tokens[8];
+        delete[] tokens;
+
+        Alojamiento* aloj = nullptr;
+        for (int i = 0; i < cantidadAloj; ++i) {
+            if (alojamientos[i]->getCodigo() == codAloj) {
+                aloj = alojamientos[i];
+                break;
+            }
+        }
+        Huesped* hues = nullptr;
+        for (int i = 0; i < cantidadHues; ++i) {
+            if (huespedes[i]->getDocumento() == docHues) {
+                hues = huespedes[i];
+                break;
+            }
+        }
+
+        Fecha fechaE = Fecha::desdeString(strFechaE);
+        Fecha fechaP = Fecha::desdeString(strFechaP);
+
+        if (cantidad == capacidad) {
+            capacidad *= 2;
+            Reservacion** tmp = new Reservacion*[capacidad];
+            for (int i = 0; i < cantidad; ++i) tmp[i] = reservas[i];
+            delete[] reservas;
+            reservas = tmp;
+        }
+
+        reservas[cantidad++] = new Reservacion(
+            codRes, fechaE, duracion,
+            metPago, fechaP, monto,
+            anotacion, aloj, hues
+            );
+    }
+
+    archivo.close();
+}
+
+// Carga de reservas históricas
+void Archivo::cargarReservasHistoricas(Reservacion**& reservas, int& cantidad,  Alojamiento** alojamientos, int cantidadAloj,  Huesped** huespedes, int cantidadHues)
+{
+    ifstream archivo("reservas_historico.txt");
+    if (!archivo.is_open()) {
+        cerr << "Error al abrir reservas_historico.txt\n";
+        cantidad = 0;
+        reservas = nullptr;
+        return;
+    }
+
+    string linea;
+    int capacidad = 10;
+    cantidad = 0;
+    reservas = new Reservacion*[capacidad];
+
+    while (getline(archivo, linea)) {
+        if (linea.empty() || linea[0] == '#') continue;
+        int nTokens = 0;
+        string* tokens = split(linea, '|', nTokens);
+        if (nTokens < 9) { delete[] tokens; continue; }
+
+        string codRes    = tokens[0];
+        string codAloj   = tokens[1];
+        string docHues   = tokens[2];
+        string strFechaE = tokens[3];
+        int duracion     = stoi(tokens[4]);
+        string metPago   = tokens[5];
+        string strFechaP = tokens[6];
+        float monto      = stof(tokens[7]);
+        string anotacion = tokens[8];
+        delete[] tokens;
+
+        Alojamiento* aloj = nullptr;
+        for (int i = 0; i < cantidadAloj; ++i) {
+            if (alojamientos[i]->getCodigo() == codAloj) {
+                aloj = alojamientos[i];
+                break;
+            }
+        }
+        Huesped* hues = nullptr;
+        for (int i = 0; i < cantidadHues; ++i) {
+            if (huespedes[i]->getDocumento() == docHues) {
+                hues = huespedes[i];
+                break;
+            }
+        }
+
+        Fecha fechaE = Fecha::desdeString(strFechaE);
+        Fecha fechaP = Fecha::desdeString(strFechaP);
+
+        if (cantidad == capacidad) {
+            capacidad *= 2;
+            Reservacion** tmp = new Reservacion*[capacidad];
+            for (int i = 0; i < cantidad; ++i) tmp[i] = reservas[i];
+            delete[] reservas;
+            reservas = tmp;
+        }
+
+        reservas[cantidad++] = new Reservacion(
+            codRes, fechaE, duracion,
+            metPago, fechaP, monto,
+            anotacion, aloj, hues
+            );
+    }
+
+    archivo.close();
+}
+

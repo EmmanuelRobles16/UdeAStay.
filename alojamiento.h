@@ -31,16 +31,7 @@ private:
 
 public:
     // Constructor principal
-    Alojamiento(const string& codigo,
-                const string& nombre,
-                const string& tipo,
-                const string& direccion,
-                const string& departamento,
-                const string& municipio,
-                float precioPorNoche,
-                string* amenidadesArr,
-                int cantidadAmenArr,
-                Anfitrion* anfitrion);
+    Alojamiento(const string& codigo, const string& nombre,  const string& tipo,  const string& direccion,  const string& departamento, const string& municipio,  float precioPorNoche, string* amenidadesArr,int cantidadAmenArr, Anfitrion* anfitrion);
 
     // Destructor
     ~Alojamiento();
