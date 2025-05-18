@@ -1,0 +1,11 @@
+# código | nombre               | documento anfitrión | departamento | municipio  | tipo       | dirección                 | precio por noche | amenidades (separadas por coma)
+A001|Casa El Retiro       |100000001|Antioquia  |El Retiro   |Casa       |Cra 10 #15-30              |120000|Piscina,Parqueadero,Aire acondicionado
+A002|Apartamento Centro   |100000002|Antioquia  |Medellín    |Apartamento|Cll 45 #23-12              |90000|Ascensor,Caja fuerte
+A003|Cabaña Montaña        |100000003|Antioquia  |Guatapé     |Casa       |Via al Peñol km 2          |150000|Patio,Parqueadero,Piscina
+A004|Loft Urbano           |100000004|Antioquia  |Envigado    |Apartamento|Cll 20 #10-5               |110000|Ascensor,Aire acondicionado
+A005|Villa Colonial        |100000005|Antioquia  |Jardín      |Casa       |Carrera 5 #3-20            |130000|Piscina,Patio,Parqueadero
+A006|Estudio Moderno       |100000006|Antioquia  |Itagüí      |Apartamento|Cll 30 #12-7               |85000|Aire acondicionado,WiFi
+A007|Finca Tranquila       |100000005|Antioquia  |Rionegro    |Casa       |Vereda El Salado           |140000|Parqueadero,Patio,Piscina
+A008|Penthouse Vista 360°  |100000006|Antioquia  |Medellín    |Apartamento|Av. El Poblado #70-15      |200000|Ascensor,Caja fuerte,Aire acondicionado
+A009|Loft Industrial       |100000007|Antioquia  |Bello       |Apartamento|Cll 55 #40-18              |92000|Ascensor,WiFi,Caja fuerte
+A010|Casa Familiar         |100000008|Antioquia  |La Ceja     |Casa       |Via Las Palmas km 5        |125000|Patio,Parqueadero,Cocina equipada
