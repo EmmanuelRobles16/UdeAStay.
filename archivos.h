@@ -1,5 +1,5 @@
-#ifndef archivos_H
-#define archivos_H
+#ifndef ARCHIVOS_H
+#define ARCHIVOS_H
 
 #include <string>
 using namespace std;
@@ -10,7 +10,7 @@ class Anfitrion;
 class Alojamiento;
 class Reservacion;
 
-class ArchivoManager {
+class Archivo {
 public:
     // Carga
     static void cargarHuespedes(Huesped**& huespedes, int& cantidad);

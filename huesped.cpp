@@ -27,42 +27,4 @@ float Huesped::getPuntuacion() {
 int Huesped::getAntiguedad() {
     return antiguedad;
 }
-/*
-void Huesped::agregarReserva(Reservacion* r) {
-    if (cantidadReservas == capacidadReservas) {
-        capacidadReservas *= 2;
-        Reservacion** nuevo = new Reservacion*[capacidadReservas];
-        for (int i = 0; i < cantidadReservas; ++i)
-            nuevo[i] = reservaciones[i];
-        delete[] reservaciones;
-        reservaciones = nuevo;
-    }
-    reservaciones[cantidadReservas++] = r;
-}
 
-bool Huesped::tieneConflicto(Fecha entrada, int duracion) {
-    for (int i = 0; i < cantidadReservas; ++i) {
-        if (reservaciones[i]->seCruzaCon(entrada, duracion)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void Huesped::mostrarReservas() {
-    for (int i = 0; i < cantidadReservas; ++i) {
-        cout << reservaciones[i]->getResumen() << endl;
-    }
-}
-
-void Huesped::eliminarReservaPorCodigo(string codigo) {
-    for (int i = 0; i < cantidadReservas; ++i) {
-        if (reservaciones[i]->getCodigo() == codigo) {
-            for (int j = i; j < cantidadReservas - 1; ++j)
-                reservaciones[j] = reservaciones[j + 1];
-            cantidadReservas--;
-            break;
-        }
-    }
-}
-*/

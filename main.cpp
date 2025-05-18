@@ -1,31 +1,30 @@
 #include <iostream>
-#include "archivos.h"
-#include "Huesped.h"
+#include "Archivos.h"
+#include "Anfitrion.h"
+
 using namespace std;
 
 int main() {
-    Huesped** huespedes;
-    int cantidadHuespedes = 0;
+    Anfitrion** anfitriones = nullptr;
+    int cantidadAnfitriones = 0;
 
-    // Cargar desde el archivo
-    ArchivoManager::cargarHuespedes(huespedes, cantidadHuespedes);
+    // 1) Llama a tu método de carga
+    Archivo::cargarAnfitriones(anfitriones, cantidadAnfitriones);
 
-    // Validación 1: archivo abierto correctamente (ya se muestra en consola si no)
-    // Validación 2: cantidad correcta
-    cout << "Cantidad de huespedes cargados: " << cantidadHuespedes << endl;
+    // 2) Valida que hayan llegado datos
+    cout << "Cantidad de anfitriones cargados: "
+         << cantidadAnfitriones << "\n";
 
-    // Validación 3: mostrar documentos para verificar carga
-    for (int i = 0; i < cantidadHuespedes; i++) {
-        cout << "- " << huespedes[i]->getDocumento() << " | antiguedad: "
-             << huespedes[i]->getAntiguedad() << " | puntuacion: "
-             << huespedes[i]->getPuntuacion() << endl;
+    for (int i = 0; i < cantidadAnfitriones; ++i) {
+        cout << "- Documento: "   << anfitriones[i]->getDocumento()
+        << " | Antigüedad: " << anfitriones[i]->getAntiguedad()
+        << " | Puntuación: "  << anfitriones[i]->getPuntuacion() << "\n";
     }
 
-    // Liberar memoria
-    for (int i = 0; i < cantidadHuespedes; i++) {
-        delete huespedes[i];
-    }
-    delete[] huespedes;
+    // 3) Liberar memoria
+    for (int i = 0; i < cantidadAnfitriones; ++i)
+        delete anfitriones[i];
+    delete[] anfitriones;
 
     return 0;
 }
