@@ -1,0 +1,6 @@
+# código | alojamiento | huésped     | fecha entrada | duración | métodoPago | fechaPago    | monto  | anotación
+R100|A001|10203040|2025-06-05|3|PSE|2025-05-20|360000|Llegamos tarde
+R101|A002|11223344|2025-06-10|2|TCredito|2025-05-22|180000|Sin desayuno
+R102|A003|12345678|2025-07-01|5|PSE|2025-06-15|750000|Visita familiar
+R103|A004|99887766|2025-06-20|1|TCredito|2025-06-01|110000|Check‐in temprano
+R104|A005|55667788|2025-06-18|4|PSE|2025-05-30|520000|Pregunta por piscina

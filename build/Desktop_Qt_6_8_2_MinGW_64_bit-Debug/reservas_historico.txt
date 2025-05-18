@@ -1,0 +1,6 @@
+# código | alojamiento | huésped     | fecha entrada | duración | métodoPago | fechaPago    | monto  | anotación
+RH001|A001|10203040|2025-04-01|3|PSE|2025-03-20|360000|Todo excelente
+RH002|A002|11223344|2025-03-15|2|TCredito|2025-03-01|180000|Sin problemas
+RH003|A003|12345678|2025-02-10|4|PSE|2025-01-25|600000|Repetiré pronto
+RH004|A006|10101010|2025-01-05|5|TCredito|2024-12-20|425000|Muy buen anfitrión
+RH005|A007|20202020|2025-03-01|2|PSE|2025-02-15|280000|Recomendado
