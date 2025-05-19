@@ -1,6 +1,6 @@
 #include "Reservacion.h"
 #include "Alojamiento.h"
-#include "Huesped.h"
+#include "huesped.h"
 #include <sstream>
 
 using std::string;
@@ -47,26 +47,3 @@ string Reservacion::comprobante() const {
     return ss.str();
 }
 
-// Resumen breve para listados
-string Reservacion::getResumen() const {
-    ostringstream ss;
-    ss << codigo << ": "
-       << fechaEntrada.toStringCorto()
-       << " - " << fechaSalida().toStringCorto();
-    return ss.str();
-}
-
-// ¿Se cruza con otro rango?
-bool Reservacion::seCruzaCon(const Fecha& otraEntrada, int otraDuracion) const {
-    Fecha otraSalida = otraEntrada.sumarDias(otraDuracion);
-    Fecha thisSalida = fechaSalida();
-    // No se cruzan si uno sale antes de que entre el otro
-    if (thisSalida.esAnterior(otraEntrada) || otraSalida.esAnterior(fechaEntrada))
-        return false;
-    return true;
-}
-
-// ¿Pertenece esta resrevacion a este huésped?
-bool Reservacion::esDelHuesped(const string& doc) const {
-    return huesped->getDocumento() == doc;
-}

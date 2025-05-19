@@ -1,14 +1,12 @@
 #include "Huesped.h"
 #include "Reservacion.h"
-//#include "Fecha.h"
-//#include <iostream>
+#include "Fecha.h"
+#include <iostream>
 
-Huesped::Huesped(string doc, int antig, float punt) {
-    documento = doc;
-    antiguedad = antig;
-    puntuacion = punt;
-    capacidadReservas = 5;
-    cantidadReservas = 0;
+Huesped::Huesped(const string& doc, int antig, float punt, const string& pwd)
+    : documento(doc), antiguedad(antig), puntuacion(punt), password(pwd),
+    cantidadReservas(0), capacidadReservas(5)
+{
     reservaciones = new Reservacion*[capacidadReservas];
 }
 
@@ -16,15 +14,14 @@ Huesped::~Huesped() {
     delete[] reservaciones;
 }
 
-string Huesped::getDocumento() {
-    return documento;
-}
+string Huesped::getDocumento() const { return documento; }
+float  Huesped::getPuntuacion() const { return puntuacion; }
+int    Huesped::getAntiguedad() const { return antiguedad; }
+string Huesped::getPassword() const  { return password; }  // ← implementación
 
-float Huesped::getPuntuacion() {
-    return puntuacion;
-}
 
-int Huesped::getAntiguedad() {
-    return antiguedad;
-}
 
+void Huesped::mostrarReservas() const {
+    for (int i = 0; i < cantidadReservas; ++i)
+        cout << reservaciones[i]->getResumen() << endl;
+}

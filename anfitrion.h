@@ -4,26 +4,29 @@
 #include <string>
 using namespace std;
 
+class Alojamiento;
+
 class Anfitrion {
 private:
     string documento;
     int antiguedad;
     float puntuacion;
-    string* codigosAlojamientos;   // Códigos de alojamientos administrados
+    string password;              // ← nuevo atributo
+    string* codigosAlojamientos;
     int cantidadAlojamientos;
     int capacidadAlojamientos;
 
 public:
-    // Constructor: recibe documento, antigüedad, puntuación y array de códigos
-    Anfitrion(const string& doc, int antig, float punt, string* codigos, int numCodigos);
+    // Añadimos el parámetro pwd
+    Anfitrion(const string& doc, int antig, float punt,
+              const string& pwd, string* codigos, int numCodigos);
     ~Anfitrion();
 
-    // Getters
     string getDocumento() const;
-    int getAntiguedad() const;
-    float getPuntuacion() const;
+    int    getAntiguedad() const;
+    float  getPuntuacion() const;
+    string getPassword() const;   // ← nuevo getter
 
-    // Operaciones sobre la lista de códigos
     void agregarAlojamiento(const string& codigo);
     void mostrarAlojamientos() const;
 };

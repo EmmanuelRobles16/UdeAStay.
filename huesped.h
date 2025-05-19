@@ -4,7 +4,6 @@
 #include <string>
 using namespace std;
 
-// Declaración anticipada
 class Reservacion;
 class Fecha;
 
@@ -13,24 +12,25 @@ private:
     string documento;
     int antiguedad;
     float puntuacion;
+    string password;              // ← nuevo atributo
     Reservacion** reservaciones;
     int cantidadReservas;
     int capacidadReservas;
 
 public:
-    Huesped(string doc, int antig, float punt);
+    // Ahora recibe también la contraseña
+    Huesped(const string& doc, int antig, float punt, const string& pwd);
     ~Huesped();
 
-    string getDocumento();
-    float getPuntuacion();
-    int getAntiguedad();
+    string getDocumento() const;
+    float getPuntuacion() const;
+    int getAntiguedad() const;
+    string getPassword() const;   // ← nuevo getter
 
     void agregarReserva(Reservacion* r);
-    bool tieneConflicto(Fecha entrada, int duracion);
-    void mostrarReservas();
-
-    // Métodos de mantenimiento
-    void eliminarReservaPorCodigo(string codigo);
+    bool tieneConflicto(const Fecha& entrada, int duracion) const;
+    void mostrarReservas() const;
+    void eliminarReservaPorCodigo(const string& codigo);
 };
 
-#endif
+#endif // HUESPED_H

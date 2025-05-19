@@ -1,6 +1,6 @@
 #include <iostream>
 #include "archivos.h"
-#include "huesped.h"
+#include "Huesped.h"
 #include "anfitrion.h"
 #include "alojamiento.h"
 #include "reservacion.h"

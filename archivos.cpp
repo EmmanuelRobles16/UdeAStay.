@@ -3,7 +3,7 @@
 #include "anfitrion.h"
 #include "alojamiento.h"
 #include "reservacion.h"
-#include "fecha.h"
+#include "Fecha.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -42,11 +42,12 @@ void Archivo::cargarHuespedes(Huesped**& huespedes, int& cantidad) {
         if (linea.empty() || linea[0] == '#') continue;
         int nTokens = 0;
         string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 3) { delete[] tokens; continue; }
+        if (nTokens < 4) { delete[] tokens; continue; }
 
         string doc = tokens[0];
         int antig    = stoi(tokens[1]);
         float punt   = stof(tokens[2]);
+        string pwd = tokens[3];
         delete[] tokens;
 
         if (cantidad == capacidad) {
@@ -56,7 +57,7 @@ void Archivo::cargarHuespedes(Huesped**& huespedes, int& cantidad) {
             delete[] huespedes;
             huespedes = tmp;
         }
-        huespedes[cantidad++] = new Huesped(doc, antig, punt);
+        huespedes[cantidad++] = new Huesped(doc, antig, punt, pwd);
     }
 
     archivo.close();
@@ -81,14 +82,15 @@ void Archivo::cargarAnfitriones(Anfitrion**& anfitriones, int& cantidad) {
         if (linea.empty() || linea[0] == '#') continue;
         int nTokens = 0;
         string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 4) { delete[] tokens; continue; }
+        if (nTokens < 5) { delete[] tokens; continue; }
 
         string doc = tokens[0];
         int antig  = stoi(tokens[1]);
         float punt = stof(tokens[2]);
+        string pwd = tokens[3];
 
         int nCods = 0;
-        string* cods = split(tokens[3], ',', nCods);
+        string* cods = split(tokens[4], ',', nCods);
         delete[] tokens;
 
         if (cantidad == capacidad) {
@@ -98,7 +100,7 @@ void Archivo::cargarAnfitriones(Anfitrion**& anfitriones, int& cantidad) {
             delete[] anfitriones;
             anfitriones = tmp;
         }
-        anfitriones[cantidad++] = new Anfitrion(doc, antig, punt, cods, nCods);
+        anfitriones[cantidad++] = new Anfitrion(doc, antig, punt, pwd, cods, nCods);
         delete[] cods;
     }
 
