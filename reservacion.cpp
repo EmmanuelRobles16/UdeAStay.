@@ -47,3 +47,12 @@ string Reservacion::comprobante() const {
     return ss.str();
 }
 
+std::string Reservacion::getResumen() const {
+    std::ostringstream ss;
+    ss
+        << codigo << " : "
+        << fechaEntrada.toStringCorto()
+        << " - "
+        << fechaSalida().toStringCorto();
+    return ss.str();
+}

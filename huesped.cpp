@@ -19,8 +19,6 @@ float  Huesped::getPuntuacion() const { return puntuacion; }
 int    Huesped::getAntiguedad() const { return antiguedad; }
 string Huesped::getPassword() const  { return password; }  // ← implementación
 
-
-
 void Huesped::mostrarReservas() const {
     for (int i = 0; i < cantidadReservas; ++i)
         cout << reservaciones[i]->getResumen() << endl;
