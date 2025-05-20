@@ -128,3 +128,14 @@ Fecha Fecha::desdeString(const std::string& texto) {
     ss >> y >> sep >> mo >> sep >> d;
     return Fecha(d, mo, y);
 }
+//la funcionalidad de comparacion de disponibilidad
+bool Fecha::seCruzanRangos(const Fecha& inicio1,
+                           const Fecha& fin1,
+                           const Fecha& inicio2,
+                           const Fecha& fin2)
+{
+    // No se cruzan si uno termina **antes** de que empiece el otro
+    if (fin1.esAnterior(inicio2) || fin2.esAnterior(inicio1))
+        return false;
+    return true;
+}

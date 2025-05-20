@@ -29,6 +29,8 @@ public:
 
     void agregarAlojamiento(const string& codigo);
     void mostrarAlojamientos() const;
+    // Muestra alojamientos y sus reservas activas
+    void mostrarAlojamientosYReservas(Alojamiento** todos, int cantidadTodos) const;
 };
 
 #endif // ANFITRION_H

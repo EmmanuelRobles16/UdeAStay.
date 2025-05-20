@@ -53,6 +53,9 @@ public:
     // Reservas
     void agregarReserva(Reservacion* r);
     void anularReserva(const string& codigoReserva);
+
+    //mostrar reservas del alojamiento
+     void mostrarReservas() const;
 };
 
 #endif // ALOJAMIENTO_H

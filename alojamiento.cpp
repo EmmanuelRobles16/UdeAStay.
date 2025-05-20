@@ -43,6 +43,15 @@ float Alojamiento::getPrecioPorNoche() const { return precioPorNoche; }
 Anfitrion* Alojamiento::getAnfitrion() const { return anfitrion; }
 string* Alojamiento::getAmenidades() const { return amenidades; }
 int Alojamiento::getCantidadAmenidades() const { return cantidadAmenidades; }
+
+//funcionalidad para mostrar reservas del alojamiento
+void Alojamiento::mostrarReservas() const {
+    cout << "  Reservas para " << codigo << " (" << nombre << "):\n";
+    for (int i = 0; i < cantidadReservas; ++i) {
+        // usamos comprobante() para detalle completo
+        cout << "    - " << reservas[i]->comprobante() << "\n";
+    }
+}
 /*
  *
  * por temas de preguntas propias estas funciones todavia no se van a usar porque primero quiero saber como formular la estructura de disponibilidad

@@ -1,4 +1,5 @@
 #include "Anfitrion.h"
+#include "alojamiento.h"
 #include <iostream>
 
 Anfitrion::Anfitrion(const string& doc, int antig, float punt,
@@ -26,4 +27,30 @@ void Anfitrion::mostrarAlojamientos() const {
     cout << "Alojamientos del anfitrión " << documento << ":\n";
     for (int i = 0; i < cantidadAlojamientos; ++i)
         cout << "  - " << codigosAlojamientos[i] << "\n";
+}
+//mostrar alojamientos con sus reservas
+
+void Anfitrion::mostrarAlojamientosYReservas(Alojamiento** todosAlojamientos,
+                                             int cantidadTotal) const
+{
+    cout << "=== Alojamientos de " << documento
+         << " (puntuación " << puntuacion << ") ===\n";
+
+    // Por cada código que administra este anfitrión
+    for (int k = 0; k < cantidadAlojamientos; ++k) {
+        const string& cod = codigosAlojamientos[k];
+
+        // Buscar en el array global el objeto Alojamiento*
+        for (int i = 0; i < cantidadTotal; ++i) {
+            if (todosAlojamientos[i]->getCodigo() == cod) {
+                Alojamiento* alo = todosAlojamientos[i];
+                cout << "- " << alo->getCodigo()
+                     << ": " << alo->getNombre() << "\n";
+                // Delegamos a Alojamiento sus reservas
+                alo->mostrarReservas();
+                break;
+            }
+        }
+    }
+    cout << "----------------------------------------\n";
 }
