@@ -5,6 +5,7 @@
 #include "Huesped.h"
 #include "Anfitrion.h"
 #include "alojamiento.h"
+#include "reservacion.h"
 
 
 //simplemente una enumaracion la cual nos dice que tipo es del usuario que esta entrand
@@ -26,7 +27,8 @@ public:
     static ResultadoLogin autenticar(Huesped** huespedes, int cantidadHuespedes, Anfitrion** anfitriones, int cantidadAnfitriones);
 
     /** Ejecuta el menú de opciones para un anfitrión autenticado, hasta que elija salir. */
-    static void runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamientos, int cantidadAlojamientos);
+    static void runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamientos, int cantidadAlojamientos, Reservacion** vigentes, int cantV, Reservacion** historico, int cantHisto);
+    static void runMenuHuesped(Huesped* huesped, Reservacion** reservas, int cantidadRes);
 };
 
 #endif // PLATAFORMA_H

@@ -34,16 +34,21 @@ ResultadoLogin Plataforma::autenticar(Huesped** huespedes, int cantidadHuespedes
 }
 //ahora por motivos de legilibilidad se iran a añadir dos menus, anfitiron y huesped
 //se llama anfitrion y alojamientos porque son los datos para mostrar en este menu
-void Plataforma::runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamientos, int cantidadAlojamientos)
-{
+void Plataforma::runMenuAnfitrion(
+    Anfitrion* anfitrion,
+    Alojamiento** alojamientos, int cantL,
+    Reservacion** vigentes,     int cantV,
+    Reservacion** historico,    int cantHisto
+    ) {
     int opc;
     do {
         cout << "\n=== Menú Anfitrión ===\n"
-             << "1) Mostrar mis alojamientos\n"
-             << "2) Mostrar mis alojamientos y reservas vigentes\n"
-             <<"3) Anular reservación\n"
+             << "1) Mis alojamientos\n"
+             << "2) Reservas vigentes\n"
+             << "3) Reservas históricas\n"
+             << "4) Anular reserva vigente\n"
              << "0) Salir\n"
-             << "Elige opción: ";
+             << "Opción: ";
         cin >> opc;
 
         switch (opc) {
@@ -52,29 +57,82 @@ void Plataforma::runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamient
             break;
 
         case 2:
-            anfitrion->mostrarAlojamientosYReservas(
-                alojamientos, cantidadAlojamientos
-                );
+            cout << "\n-- Vigentes --\n";
+            for (int i = 0; i < cantV; ++i) {
+                if (vigentes[i]->getAlojamiento()->getAnfitrion() == anfitrion)
+                    cout << " • " << vigentes[i]->comprobante() << "\n";
+            }
             break;
 
-        case 3: {
-            string codigo;
-            cout << "Código de la reserva a anular: ";
-            cin  >> codigo;
-            anfitrion->anularReservacion(
-                codigo,
-                alojamientos,
-                cantidadAlojamientos
-                );
+        case 3:
+            cout << "\n-- Históricas --\n";
+            for (int i = 0; i < cantHisto; ++i) {
+                if (historico[i]->getAlojamiento()->getAnfitrion() == anfitrion)
+                    cout << " • " << historico[i]->comprobante() << "\n";
+            }
+            break;
+
+        case 4: {
+            cout << "Código de reserva a anular: ";
+            string cod; cin >> cod;
+            bool exito = false;
+            for (int i = 0; i < cantV; ++i) {
+                if (vigentes[i]->getCodigo() == cod &&
+                    vigentes[i]->getAlojamiento()->getAnfitrion() == anfitrion)
+                {
+                    anfitrion->anularReservacion(
+                        cod, alojamientos, cantL
+                        );
+                    cout << "Reserva " << cod << " anulada.\n";
+                    exito = true;
+                    break;
+                }
+            }
+            if (!exito) cout << "No existe esa reserva.\n";
             break;
         }
 
         case 0:
-            cout << "Cerrando sesión...\n";
+            cout << "Saliendo...\n";
             break;
 
         default:
             cout << "Opción inválida.\n";
+        }
+    } while (opc != 0);
+}
+
+//menu huesped
+void Plataforma::runMenuHuesped(Huesped* huesped, Reservacion** reservas, int cantidadRes) {
+    int opc;
+    do {
+        cout << "\n=== Menú Huésped ===\n"
+             << "1) Mostrar mis reservas activas\n"
+             << "0) Salir\n"
+             << "Elige opción: ";
+        cin >> opc;
+
+        switch (opc) {
+        case 1: {
+            cout << "\nTus reservas activas:\n";
+            const string docUsu = huesped->getDocumento();
+            bool found = false;
+            for (int i = 0; i < cantidadRes; ++i) {
+                if (reservas[i]->esDelHuesped(docUsu)) {
+                    cout << "  - " << reservas[i]->getResumen() << "\n";
+                    found = true;
+                }
+            }
+            if (!found)
+                cout << "  (no tienes reservas activas)\n";
+            break;
+        }
+        case 0:
+            cout << "Cerrando sesión de huésped...\n";
+            break;
+
+        default:
+            cout << "Opción inválida, intenta de nuevo.\n";
         }
     } while (opc != 0);
 }
