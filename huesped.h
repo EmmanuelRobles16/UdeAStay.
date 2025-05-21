@@ -28,9 +28,7 @@ public:
     string getPassword() const;   // ← nuevo getter
 
     void agregarReserva(Reservacion* r);
-    bool tieneConflicto(const Fecha& entrada, int duracion) const;
     void mostrarReservas() const;
-    void eliminarReservaPorCodigo(const string& codigo);
 };
 
 #endif // HUESPED_H

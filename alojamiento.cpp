@@ -45,41 +45,48 @@ string* Alojamiento::getAmenidades() const { return amenidades; }
 int Alojamiento::getCantidadAmenidades() const { return cantidadAmenidades; }
 
 //funcionalidad para mostrar reservas del alojamiento
-void Alojamiento::mostrarReservas() const {
-    cout << "  Reservas para " << codigo << " (" << nombre << "):\n";
-    for (int i = 0; i < cantidadReservas; ++i) {
-        // usamos comprobante() para detalle completo
-        cout << "    - " << reservas[i]->comprobante() << "\n";
-    }
-}
-/*
- *
- * por temas de preguntas propias estas funciones todavia no se van a usar porque primero quiero saber como formular la estructura de disponibilidad
-// Agregar una reserva (sin tocar disponibilidad aún)
+// ——— Reservas (semidinámico con indexación) ———————————————
+
 void Alojamiento::agregarReserva(Reservacion* r) {
+    // 1) Si el array está lleno, duplicar capacidad
     if (cantidadReservas == capacidadReservas) {
-        capacidadReservas *= 2;
-        Reservacion** tmp = new Reservacion*[capacidadReservas];
+        int nuevaCap = capacidadReservas * 2;
+        Reservacion** tmp = new Reservacion*[nuevaCap];
+        // copiar viejos punteros
         for (int i = 0; i < cantidadReservas; ++i) {
             tmp[i] = reservas[i];
         }
         delete[] reservas;
         reservas = tmp;
+        capacidadReservas = nuevaCap;
     }
+    // 2) Insertar al final
     reservas[cantidadReservas++] = r;
 }
-*/
-// Anular reserva y ajustar la lista (sin liberar días de calendario)
+
 void Alojamiento::anularReserva(const string& codigoReserva) {
+    // Buscar la reserva en el array
     for (int i = 0; i < cantidadReservas; ++i) {
         if (reservas[i]->getCodigo() == codigoReserva) {
-            // Desplazar elementos hacia atrás
+            // desplazar todo hacia atrás para tapar el hueco
             for (int j = i; j < cantidadReservas - 1; ++j) {
                 reservas[j] = reservas[j + 1];
             }
-            cantidadReservas--;
-            break;
+            --cantidadReservas;
+            return;
         }
     }
+    // si no la encontró, no hace nada
 }
 
+void Alojamiento::mostrarReservas() const {
+    if (cantidadReservas == 0) {
+        std::cout << "    (no hay reservas vigentes)\n";
+        return;
+    }
+    for (int i = 0; i < cantidadReservas; ++i) {
+        std::cout << "    - "
+                  << reservas[i]->getResumen()
+                  << "\n";
+    }
+}

@@ -173,12 +173,7 @@ void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
 }
 
 // Carga de reservas vigentes
-void Archivo::cargarReservasVigentes(Reservacion**& reservas,
-                                     int& cantidad,
-                                     Alojamiento** alojamientos,
-                                     int cantidadAloj,
-                                     Huesped** huespedes,
-                                     int cantidadHues)
+void Archivo::cargarReservasVigentes(Reservacion**& reservas, int& cantidad, Alojamiento** alojamientos, int cantidadAloj, Huesped** huespedes, int cantidadHues)
 {
     ifstream archivo("reservas_vigentes.txt");
     if (!archivo.is_open()) {
@@ -241,6 +236,20 @@ void Archivo::cargarReservasVigentes(Reservacion**& reservas,
             metPago, fechaP, monto,
             anotacion, aloj, hues
             );
+
+        Reservacion* r = new Reservacion(
+            codRes, fechaE, duracion,
+            metPago, fechaP, monto,
+            anotacion, aloj, hues
+            );
+
+        // 2) Registramos esa reserva dentro de
+        //    su alojamiento *y* en su huésped:
+        if (aloj) aloj->agregarReserva(r);
+        if (hues) hues->agregarReserva(r);
+
+        // 3) Finalmente la guardamos en el array global
+        reservas[cantidad++] = r;
     }
 
     archivo.close();
