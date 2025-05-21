@@ -40,4 +40,49 @@ public:
     bool esDelHuesped(const std::string& doc) const;
 };
 
+class RegistroReservas{
+public:
+    /**
+     * Inicializa el gestor con el array de huéspedes.
+     * Se crea internamente:
+     *  - un array global de Reservacion* (capacidad inicial 10)
+     *  - un arreglo de listas por huésped (capacidad inicial 4 cada una)
+     *
+     * @param huespedes     Punteros a los huéspedes existentes.
+     * @param cantHuespedes Número de huéspedes en la plataforma.
+     */
+    RegistroReservas(Huesped** huespedes, int cantHuespedes);
+    /** Libera toda la memoria asignada. */
+    ~RegistroReservas();
+
+    void cargarVigentes(const char* rutaArchivo,Alojamiento** alojamientos, int cantAlojamientos);
+
+    /**
+     * Devuelve el sub-array de Reservacion* para el huésped 'idx'.
+     * outCantidad se fija al número de reservas de ese huésped.
+     */
+    Reservacion** getReservasPorHuesped(int idx, int& outCantidad) const;
+
+private:
+    // Array global de todas las reservas
+    Reservacion** arreglo;
+    int  total;
+    int  capacidad;
+
+    // Listas por huésped
+    struct Lista {
+        Reservacion** datos;
+        int tam;    // cuántas reservas actualmente
+        int cap;// capacidad del array 'datos'
+    };
+    Lista*    porHues;     // tamaño = cantHuespedes
+    Huesped** listaHues;   // punteros originales
+    int       cantHues;
+
+    // Helpers para redimensionar
+    /** Duplicar capacidad del array global cuando esté lleno. */
+    void ensureGlobalCapacidad();
+     /** Duplicar capacidad de la lista de un huésped cuando esté llena. */
+    void ensureListaCapacidad(int idx);
+};
 #endif // RESERVACION_H
