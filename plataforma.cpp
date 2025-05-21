@@ -41,6 +41,7 @@ void Plataforma::runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamient
         cout << "\n=== Menú Anfitrión ===\n"
              << "1) Mostrar mis alojamientos\n"
              << "2) Mostrar mis alojamientos y reservas vigentes\n"
+             <<"3) Anular reservación\n"
              << "0) Salir\n"
              << "Elige opción: ";
         cin >> opc;
@@ -55,6 +56,18 @@ void Plataforma::runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamient
                 alojamientos, cantidadAlojamientos
                 );
             break;
+
+        case 3: {
+            string codigo;
+            cout << "Código de la reserva a anular: ";
+            cin  >> codigo;
+            anfitrion->anularReservacion(
+                codigo,
+                alojamientos,
+                cantidadAlojamientos
+                );
+            break;
+        }
 
         case 0:
             cout << "Cerrando sesión...\n";

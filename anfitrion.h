@@ -31,6 +31,7 @@ public:
     void mostrarAlojamientos() const;
     // Muestra alojamientos y sus reservas activas
     void mostrarAlojamientosYReservas(Alojamiento** todos, int cantidadTodos) const;
+    void anularReservacion(const std::string& codigoReserva, Alojamiento** todosAloj, int cantidadAloj) const;
 };
 
 #endif // ANFITRION_H

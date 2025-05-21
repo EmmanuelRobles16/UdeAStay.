@@ -1,5 +1,6 @@
 #include "Anfitrion.h"
 #include "alojamiento.h"
+#include "reservacion.h"
 #include <iostream>
 
 Anfitrion::Anfitrion(const string& doc, int antig, float punt,
@@ -53,4 +54,34 @@ void Anfitrion::mostrarAlojamientosYReservas(Alojamiento** todosAlojamientos,
         }
     }
     cout << "----------------------------------------\n";
+}
+
+void Anfitrion::anularReservacion(const string& codigoReserva,
+                                  Alojamiento** todosAloj,
+                                  int cantidadAloj) const
+{
+    bool encontrado = false;
+
+    // Recorro cada código de alojamiento que maneja este anfitrión
+    for (int k = 0; k < cantidadAlojamientos && !encontrado; ++k) {
+        const string& codAloj = codigosAlojamientos[k];
+
+        // Busco el objeto Alojamiento* en el array global
+        for (int i = 0; i < cantidadAloj; ++i) {
+            if (todosAloj[i]->getCodigo() == codAloj) {
+                // Intento anular la reserva dentro del Alojamiento
+                todosAloj[i]->anularReserva(codigoReserva);
+                encontrado = true;
+                break;
+            }
+        }
+    }
+
+    if (encontrado) {
+        cout << "Reserva \"" << codigoReserva
+             << "\" anulada correctamente.\n";
+    } else {
+        cout << "No se encontró la reserva \"" << codigoReserva
+             << "\" en ninguno de tus alojamientos.\n";
+    }
 }

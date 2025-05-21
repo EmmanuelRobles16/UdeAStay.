@@ -68,7 +68,7 @@ void Alojamiento::agregarReserva(Reservacion* r) {
     }
     reservas[cantidadReservas++] = r;
 }
-
+*/
 // Anular reserva y ajustar la lista (sin liberar días de calendario)
 void Alojamiento::anularReserva(const string& codigoReserva) {
     for (int i = 0; i < cantidadReservas; ++i) {
@@ -82,4 +82,4 @@ void Alojamiento::anularReserva(const string& codigoReserva) {
         }
     }
 }
-*/
+
