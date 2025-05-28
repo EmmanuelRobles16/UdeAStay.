@@ -1,8 +1,9 @@
 #ifndef HUESPED_H
 #define HUESPED_H
 
-#include <cstdio>  // printf, sprintf
-#include <cstdlib> // malloc, free, atoi
+#include <cstdio>   // printf, snprintf
+#include <cstdlib>  // malloc, free, realloc
+#include <cstring>  // strlen, strcpy
 #include "Reservacion.h"
 
 class Huesped {
@@ -12,17 +13,25 @@ private:
     float puntuacion;          // Rating acumulado
     char* password;            // Contraseña
 
-    // Puntero a arreglo dinámico de Reservacion*
+    // Arreglo dinámico de Reservacion*
     Reservacion** reservaciones;
     int cantidadReservas;
     int capacidadReservas;
 
 public:
-    // Constructor y destructor
+    // Constructor parametrizado
     Huesped(const char* doc, int antig, float punt, const char* pwd);
+
+    // Constructor de copia (deep copy)
+    Huesped(const Huesped& otro);
+
+    // Operador de asignación (deep copy + self-check)
+    Huesped& operator=(const Huesped& otro);
+
+    // Destructor
     ~Huesped();
 
-    // Getters con buffers C-style
+    // Getters C-style
     void getDocumento(char* buffer, int bufSize) const;
     int  getAntiguedad() const;
     float getPuntuacion() const;
@@ -33,10 +42,11 @@ public:
 
     // Añadir una Reservacion*
     void agregarReserva(Reservacion* r);
-    /**
-     * Anula una reserva activa:
-     *  - La quita del arreglo interno del huésped. - La quita del arreglo global de reservas vigentes.  - Reescribe el archivo "reservas_vigentes.txt" excluyendo dicha línea.
-     */
+
+    // Anula una reserva activa:
+    //  - La quita del arreglo interno del huésped.
+    //  - La quita del arreglo global de reservas vigentes.
+    //  - Reescribe "reservas_vigentes.txt" excluyendo la línea.
     void anularReservacion(const char* codigoReserva, Reservacion**& reservasGlobal, int& cantidadGlobal);
 };
 

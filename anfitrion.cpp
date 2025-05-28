@@ -4,22 +4,18 @@
 #include <cstdio>
 extern Reservacion** reservasHistoricas;
 extern int cantidadHistoricas;
-
-// Constructor: copia cadenas y arreglo de códigos
+// Constructor parametrizado
 Anfitrion::Anfitrion(const char* doc, int antig, float punt, const char* pwd, const char** codigos, int numCodigos)
     : antiguedad(antig), puntuacion(punt), cantidadAlojamientos(numCodigos), capacidadAlojamientos(numCodigos)
 {
-    // Copiar documento
     int lenDoc = std::strlen(doc) + 1;
-    documento = (char*)std::malloc(lenDoc);         // std::malloc: reserva memoria en bytes
+    documento = (char*)std::malloc(lenDoc);
     std::strcpy(documento, doc);
 
-    // Copiar password
     int lenPwd = std::strlen(pwd) + 1;
     password = (char*)std::malloc(lenPwd);
     std::strcpy(password, pwd);
 
-    // Crear arreglo de punteros a cadenas para códigos
     codigosAlojamientos = (char**)std::malloc(sizeof(char*) * capacidadAlojamientos);
     for (int i = 0; i < cantidadAlojamientos; ++i) {
         int len = std::strlen(codigos[i]) + 1;
@@ -28,18 +24,17 @@ Anfitrion::Anfitrion(const char* doc, int antig, float punt, const char* pwd, co
     }
 }
 
-// Destructor: libera cada bloque de memoria
-Anfitrion::~Anfitrion() {
-    // Liberar cadenas de códigos
+
+// Destructor
+Anfitrion::~Anfitrion()
+{
     for (int i = 0; i < cantidadAlojamientos; ++i) {
         std::free(codigosAlojamientos[i]);
     }
     std::free(codigosAlojamientos);
-    // Liberar documento y password
-    std::free(documento);   // std::free: libera memoria reservada con std::malloc
+    std::free(documento);
     std::free(password);
 }
-
 void Anfitrion::getDocumento(char* buffer, int bufSize) const {
     std::snprintf(buffer, bufSize, "%s", documento);  // std::snprintf: formatea seguro en buffer
 }

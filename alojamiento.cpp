@@ -33,23 +33,30 @@ Alojamiento::Alojamiento(const char* cod, const char* nom, const char* tip, cons
 
 // Destructor: libera amenidades, reservas y cadenas
 Alojamiento::~Alojamiento() {
-    // Liberar amenidades
-    for (int i = 0; i < cantidadAmenidades; ++i) {
-        std::free(amenidades[i]);                  // free libera malloc
+    // Liberar arreglo de reservas
+    if (reservas) {
+        std::free(reservas);
+        reservas = nullptr;
     }
-    std::free(amenidades);
 
-    // Liberar reservas array (no libera objetos Reservacion)
-    std::free(reservas);
+    // Liberar arreglo de amenidades
+    if (amenidades) {
+        for (int i = 0; i < cantidadAmenidades; ++i) {
+            std::free(amenidades[i]);
+        }
+        std::free(amenidades);
+        amenidades = nullptr;
+    }
 
-    // Liberar cadenas básicas
-    std::free(codigo);
-    std::free(nombre);
-    std::free(tipo);
-    std::free(direccion);
-    std::free(departamento);
-    std::free(municipio);
+    // Liberar cadenas de texto
+    std::free(codigo);       codigo = nullptr;
+    std::free(nombre);       nombre = nullptr;
+    std::free(tipo);         tipo = nullptr;
+    std::free(direccion);    direccion = nullptr;
+    std::free(departamento); departamento = nullptr;
+    std::free(municipio);    municipio = nullptr;
 }
+
 
 // Getters: snprintf para copiar en buffer de tamaño bufSize
 void Alojamiento::getCodigo(char* buffer, int bufSize) const {
@@ -143,22 +150,11 @@ bool Alojamiento::estaDisponible(const Fecha& inicio, int duracion) const {
     // DEBUG: muestra los parámetros de entrada
     char cod[32];
     getCodigo(cod, sizeof(cod));
-    printf(">>> DEBUG estaDisponible para %s: inicio=%04d-%02d-%02d, fin=%04d-%02d-%02d, dur=%d\n",
-           cod,
-           inicio.getAnio(), inicio.getMes(), inicio.getDia(),
-           fin.getAnio(),   fin.getMes(),   fin.getDia(),
-           duracion);
 
     // Recorre las reservas vigentes de ESTE alojamiento
     for (int i = 0; i < cantidadReservas; ++i) {
         Fecha rIni = reservas[i]->getFechaEntrada();
         Fecha rFin = reservas[i]->fechaSalida();
-
-        // DEBUG: muestra cada reserva y su solapamiento
-        printf("    Reserva[%d]: rangoGRES %04d-%02d-%02d → %04d-%02d-%02d  ",
-               i,
-               rIni.getAnio(), rIni.getMes(), rIni.getDia(),
-               rFin.getAnio(), rFin.getMes(), rFin.getDia());
 
         bool cruzan = Fecha::seCruzanRangos(inicio, fin, rIni, rFin);
         printf("seCruzanRangos=%d\n", cruzan);
