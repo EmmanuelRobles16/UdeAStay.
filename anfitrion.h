@@ -41,7 +41,7 @@ public:
     void mostrarAlojamientosYReservas(Alojamiento** todosAlojs, int total, bool historicas = false) const;
 
     // Anula una reservación por código
-    void anularReservacion(const char* codigoReserva, Alojamiento** todosAlojs, int total) const;
+    void anularReservacion(const char* codigoReserva, Reservacion**& reservasVigentes, int& cantidadVigentes) const;
 };
 
 #endif

@@ -8,8 +8,9 @@
 
 // ✅ Definiciones globales (visibles desde extern)
 Reservacion** reservasHistoricas = nullptr;
-int cantidadHistoricas = 0;
-
+int           cantidadHistoricas  = 0;
+Reservacion** reservasVigentes   = nullptr;
+int           cantidadVigentes   = 0;
 int main() {
     // 1) Cargo datos desde archivos de texto
     Huesped** huespedes = nullptr;
@@ -26,22 +27,26 @@ int main() {
     Archivo::cargarAlojamientos(alojamientos, cantAl, anfitriones, cantA);
 
     // 2) Cargo reservas vigentes
-    Reservacion** reservasV = nullptr;
-    int cantV = 0;
-    Archivo::cargarReservasVigentes(reservasV, cantV, alojamientos, cantAl, huespedes, cantH);
+    Archivo::cargarReservasVigentes(reservasVigentes, cantidadVigentes, alojamientos, cantAl, huespedes, cantH);
 
     // 3) Cargo reservas históricas
     Archivo::cargarReservasHistoricas(reservasHistoricas, cantidadHistoricas, alojamientos, cantAl, huespedes, cantH);
 
     // 4) Autenticación de usuario
+    Plataforma plataforma;
     ResultadoLogin res = Plataforma::autenticar(huespedes, cantH, anfitriones, cantA);
 
     // 5) Ejecución del menú según tipo de usuario
     if (res.tipo == TipoUsuario::Anfitrion) {
-        Plataforma::runMenuAnfitrion(res.anfitrion, alojamientos, cantAl);
-    } else if (res.tipo == TipoUsuario::Huesped) {
-        Plataforma::runMenuHuesped(res.huesped, reservasV, cantV, reservasHistoricas, cantidadHistoricas);
-    } else {
+        plataforma.runMenuAnfitrion(res.anfitrion,
+                                    alojamientos, cantAl);
+    }
+    else if (res.tipo == TipoUsuario::Huesped) {
+        plataforma.runMenuHuesped(res.huesped,
+                                  reservasVigentes,   cantidadVigentes,
+                                  reservasHistoricas, cantidadHistoricas);
+    }
+    else {
         std::printf("Acceso denegado o usuario no encontrado.\n");
     }
 

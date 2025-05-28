@@ -75,26 +75,62 @@ void Anfitrion::mostrarAlojamientos() const {
     }
 }
 
-void Anfitrion::anularReservacion(const char* codigoReserva, Alojamiento** todosAlojs, int total) const {
+void Anfitrion::anularReservacion(
+    const char* codigoReserva,
+    Reservacion**& reservasVigentes,
+    int& cantidadVigentes
+    ) const {
     bool encontrado = false;
-    for (int k = 0; k < cantidadAlojamientos && !encontrado; ++k) {
-        for (int i = 0; i < total; ++i) {
-            char aloCod[64];
-            todosAlojs[i]->getCodigo(aloCod, sizeof(aloCod));
-            if (std::strcmp(aloCod, codigosAlojamientos[k]) == 0) {
-                // Alojamiento gestiona la anulación
-                todosAlojs[i]->anularReserva(codigoReserva);
-                encontrado = true;
-                break;
+
+    // Buscar y eliminar de reservasVigentes
+    for (int i = 0; i < cantidadVigentes; ++i) {
+        char cod[64];
+        reservasVigentes[i]->getCodigo(cod, sizeof(cod));
+        if (std::strcmp(cod, codigoReserva) == 0) {
+            // Verificar que la reserva sea de este anfitrión
+            if (reservasVigentes[i]->getAlojamiento()->getAnfitrion() != this) {
+                std::printf("No puedes cancelar una reserva que no es tuya.\n");
+                return;
             }
+            // Eliminar objeto y desplazar
+            delete reservasVigentes[i];
+            for (int j = i; j + 1 < cantidadVigentes; ++j) {
+                reservasVigentes[j] = reservasVigentes[j+1];
+            }
+            cantidadVigentes--;
+            encontrado = true;
+            break;
         }
     }
-    if (encontrado) {
-        std::printf("Reserva '%s' anulada correctamente.\n", codigoReserva);
-    } else {
-        std::printf("No se encontró la reserva '%s' en tus alojamientos.\n", codigoReserva);
+
+    if (!encontrado) {
+        std::printf("No existe reserva con código '%s'.\n", codigoReserva);
+        return;
     }
+
+    // Reescribir archivo de reservas vigentes
+    FILE* fin  = std::fopen("reservas_vigentes.txt", "r");
+    FILE* fout = std::fopen("reservas_vigentes.tmp", "w");
+    if (fin && fout) {
+        char linea[1024];
+        while (std::fgets(linea, sizeof(linea), fin)) {
+            char copia[1024];
+            std::strcpy(copia, linea);
+            char* token = std::strtok(linea, "|");
+            if (token && std::strcmp(token, codigoReserva) == 0) {
+                continue;  // saltar esta línea
+            }
+            std::fputs(copia, fout);
+        }
+        std::fclose(fin);
+        std::fclose(fout);
+        std::remove("reservas_vigentes.txt");
+        std::rename("reservas_vigentes.tmp", "reservas_vigentes.txt");
+    }
+
+    std::printf("Reserva '%s' anulada correctamente.\n", codigoReserva);
 }
+
 void Anfitrion::mostrarAlojamientosYReservas(
     Alojamiento** todosAlojs,
     int           total,

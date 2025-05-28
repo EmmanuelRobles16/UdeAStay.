@@ -1,5 +1,6 @@
 #include "Plataforma.h"
-
+extern Reservacion** reservasVigentes;
+extern int           cantidadVigentes;
 
 ResultadoLogin Plataforma::autenticar(
     Huesped** huespedes, int cantidadHuespedes,
@@ -57,51 +58,70 @@ void Plataforma::runMenuAnfitrion(
     Alojamiento** alojamientos,
     int           cantidadAlojamientos
     ) {
-    int opc = -1;
+    int  opc = -1;
     char input[16];
 
     do {
-        printf("\n=== Menú Anfitrión ===\n");
-        printf("1) Mis alojamientos\n");
-        printf("2) Reservas vigentes\n");
-        printf("3) Reservas históricas\n");
-        printf("4) Anular reserva\n");
-        printf("0) Salir\n");
-        printf("Opción: ");
-        if (!fgets(input, sizeof(input), stdin)) break;
-        opc = atoi(input);
+        std::printf("\n=== Menú Anfitrión ===\n");
+        std::printf("1) Mis alojamientos\n");
+        std::printf("2) Reservas vigentes\n");
+        std::printf("3) Reservas históricas\n");
+        std::printf("4) Anular reserva\n");
+        std::printf("0) Salir\n");
+        std::printf("Opción: ");
+        if (!std::fgets(input, sizeof(input), stdin)) break;
+        opc = std::atoi(input);
 
         switch (opc) {
         case 1:
             anfitrion->mostrarAlojamientos();
             break;
-        case 2:
-            // True = histórico, False = vigente
-            anfitrion->mostrarAlojamientosYReservas(
-                alojamientos, cantidadAlojamientos, false
-                );
+
+        case 2: {
+            // Verificar si este anfitrión tiene alguna reserva vigente
+            bool tiene = false;
+            for (int i = 0; i < cantidadVigentes; ++i) {
+                if (reservasVigentes[i]->getAlojamiento()->getAnfitrion() == anfitrion) {
+                    tiene = true;
+                    break;
+                }
+            }
+            if (!tiene) {
+                std::printf("(No tienes reservas vigentes)\n");
+            } else {
+                anfitrion->mostrarAlojamientosYReservas(
+                    alojamientos, cantidadAlojamientos, false
+                    );
+            }
             break;
+        }
+
         case 3:
             anfitrion->mostrarAlojamientosYReservas(
                 alojamientos, cantidadAlojamientos, true
                 );
             break;
+
         case 4: {
-            char codRes[64];
-            printf("Código de reserva a anular: ");
-            if (fgets(codRes, sizeof(codRes), stdin)) {
-                codRes[strcspn(codRes, "\n")] = '\0';
+            char codigo[64];
+            std::printf("Código de reserva a anular: ");
+            if (std::fgets(codigo, sizeof(codigo), stdin)) {
+                codigo[std::strcspn(codigo, "\r\n")] = '\0';
                 anfitrion->anularReservacion(
-                    codRes, alojamientos, cantidadAlojamientos
+                    codigo,
+                    reservasVigentes,
+                    cantidadVigentes
                     );
             }
             break;
         }
+
         case 0:
-            printf("Saliendo.\n");
+            std::printf("Saliendo menú anfitrión.\n");
             break;
+
         default:
-            printf("Opción inválida.\n");
+            std::printf("Opción inválida.\n");
         }
     } while (opc != 0);
 }

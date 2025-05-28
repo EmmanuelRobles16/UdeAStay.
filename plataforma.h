@@ -37,9 +37,7 @@ public:
     /**
      * Menú para Anfitrion autenticado: muestra opciones y lee con scanf.
      */
-    static void runMenuAnfitrion(
-        Anfitrion* anfitrion,
-        Alojamiento** alojamientos, int cantidadAlojamientos
+    void runMenuAnfitrion(Anfitrion*    anfitrion, Alojamiento** alojamientos,int cantidadAlojamientos
         );
 
     /**
