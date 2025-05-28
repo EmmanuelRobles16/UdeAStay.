@@ -72,8 +72,8 @@ void Plataforma::runMenuAnfitrion(
         std::printf("2) Reservas vigentes\n");
         std::printf("3) Reservas históricas\n");
         std::printf("4) Anular reserva\n");
+        std::printf("5) Consultar reservas por rango de fechas\n");
         std::printf("0) Salir\n");
-        std::printf("Opción: ");
         if (!std::fgets(input, sizeof(input), stdin)) break;
         opc = std::atoi(input);
 
@@ -120,7 +120,39 @@ void Plataforma::runMenuAnfitrion(
             }
             break;
         }
+        case 5: {
+            char buf[16];
+            // Leer fecha inicio
+            printf("Fecha inicio (YYYY-MM-DD): ");
+            fgets(buf, sizeof(buf), stdin);
+            buf[strcspn(buf, "\r\n")] = '\0';
+            Fecha desde = Fecha::fromShortString(buf);
 
+            // Leer fecha fin
+            printf("Fecha fin    (YYYY-MM-DD): ");
+            fgets(buf, sizeof(buf), stdin);
+            buf[strcspn(buf, "\r\n")] = '\0';
+            Fecha hasta = Fecha::fromShortString(buf);
+
+            // Si el usuario se confundió y puso fin < inicio, las intercambiamos
+            if (hasta.esAnterior(desde)) {
+                Fecha tmp = desde;
+                desde = hasta;
+                hasta = tmp;
+                printf("↔ Fecha fin anterior a inicio: invirtiendo rango a [%04d-%02d-%02d … %04d-%02d-%02d]\n",
+                       desde.getAnio(), desde.getMes(), desde.getDia(),
+                       hasta.getAnio(), hasta.getMes(), hasta.getDia());
+            }
+
+            // Llamada a la Funcionalidad V
+            anfitrion->mostrarReservasPorRango(
+                alojamientos,
+                cantidadAlojamientos,
+                desde,
+                hasta
+                );
+            break;
+        }
         case 0:
             std::printf("Saliendo menú anfitrión.\n");
             break;

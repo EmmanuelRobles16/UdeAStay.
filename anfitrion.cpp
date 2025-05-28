@@ -177,3 +177,50 @@ void Anfitrion::mostrarAlojamientosYReservas(
     printf("----------------------------------------\n");
 }
 
+void Anfitrion::mostrarReservasPorRango(
+    Alojamiento** todosAlojs,
+    int           total,
+    const Fecha&  desde,
+    const Fecha&  hasta
+    ) const {
+    // Cabecera
+    char docBuf[64];
+    getDocumento(docBuf, sizeof(docBuf));
+    printf("=== Reservas vigentes de %s entre %04d-%02d-%02d y %04d-%02d-%02d ===\n",
+           docBuf,
+           desde.getAnio(), desde.getMes(), desde.getDia(),
+           hasta.getAnio(), hasta.getMes(), hasta.getDia());
+
+    // Para cada alojamiento del anfitrión…
+    for (int i = 0; i < total; ++i) {
+        Alojamiento* al = todosAlojs[i];
+        if (al->getAnfitrion() != this) continue;
+
+        // Mostrar encabezado de alojamiento
+        char codAl[64], nomAl[128];
+        al->getCodigo(codAl, sizeof(codAl));
+        al->getNombre(nomAl, sizeof(nomAl));
+        printf("- %s: %s\n", codAl, nomAl);
+
+        int mostradas = 0;
+        // Recorremos sus reservas vigentes
+        // (su arreglo interno ‘reservas’ via al->mostrarReservas(), pero filtrado aquí)
+        for (int r = 0; r < al->getCantidadReservas(); ++r) {
+            Reservacion* res = al->getReserva(r);
+            Fecha fEnt = res->getFechaEntrada();
+            // Comprueba fEnt >= desde  &&  fEnt <= hasta
+            bool geDesde = !fEnt.esAnterior(desde);
+            bool leHasta = !hasta.esAnterior(fEnt);
+            if (geDesde && leHasta) {
+                char resumen[128];
+                res->toResumen(resumen, sizeof(resumen));
+                printf("    - %s\n", resumen);
+                mostradas++;
+            }
+        }
+        if (mostradas == 0) {
+            printf("    (sin reservas en ese rango)\n");
+        }
+    }
+    printf("------------------------------------------------\n");
+}

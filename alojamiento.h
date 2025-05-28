@@ -45,6 +45,8 @@ public:
     void getMunicipio(char* buffer, int bufSize) const;
     float getPrecioPorNoche() const;
     Anfitrion* getAnfitrion() const;
+    int           getCantidadReservas() const;
+    Reservacion*  getReserva(int idx) const;
 
     // Amenidades
     int getCantidadAmenidades() const;

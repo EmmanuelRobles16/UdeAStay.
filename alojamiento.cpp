@@ -127,6 +127,13 @@ void Alojamiento::mostrarReservas() const {
         printf("    - %s\n", resumen);
     }
 }
+int Alojamiento::getCantidadReservas() const {
+    return cantidadReservas;
+}
+
+Reservacion* Alojamiento::getReserva(int idx) const {
+    return reservas[idx];
+}
 
 bool Alojamiento::estaDisponible(const Fecha& inicio, int duracion) const {
     // Calcula fecha de fin

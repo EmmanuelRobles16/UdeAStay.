@@ -42,6 +42,8 @@ public:
 
     // Anula una reservación por código
     void anularReservacion(const char* codigoReserva, Reservacion**& reservasVigentes, int& cantidadVigentes) const;
+    void mostrarReservasPorRango(Alojamiento** todosAlojs, int total, const Fecha& desde,const Fecha& hasta) const;
+
 };
 
 #endif
