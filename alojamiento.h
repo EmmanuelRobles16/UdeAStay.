@@ -1,61 +1,59 @@
 #ifndef ALOJAMIENTO_H
 #define ALOJAMIENTO_H
 
-#include <string>
-using namespace std;
+#include <cstdio>   // printf, snprintf
+#include <cstdlib>  // malloc, free, realloc
+#include <cstring>  // strlen, strcpy, strcmp
+#include "Reservacion.h"
 
-class Anfitrion;
-class Reservacion;
+class Anfitrion;  // Declaración adelantada
 
 class Alojamiento {
 private:
-    string codigo;
-    string nombre;
-    string tipo;
-    string direccion;
-    string departamento;
-    string municipio;
-    float precioPorNoche;
+    char* codigo;             // Código único del alojamiento
+    char* nombre;             // Nombre del alojamiento
+    char* tipo;               // Tipo (hotel, hostal, etc.)
+    char* direccion;          // Dirección completa
+    char* departamento;       // Departamento o estado
+    char* municipio;          // Municipio o ciudad
+    float precioPorNoche;     // Tarifa por noche
 
-    // Amenidades
-    string* amenidades;
+    // Amenidades como cadenas C en arreglo dinámico
+    char** amenidades;
     int cantidadAmenidades;
 
-    // Lista dinámica de reservas propias
+    // Reservas asociadas (punteros a Reservacion)
     Reservacion** reservas;
     int cantidadReservas;
     int capacidadReservas;
 
-    // Relación con anfitrión
+    // Relación con anfitrión (puntero)
     Anfitrion* anfitrion;
 
 public:
-    // Constructor principal
-    Alojamiento(const string& codigo, const string& nombre,  const string& tipo,  const string& direccion,  const string& departamento, const string& municipio,  float precioPorNoche, string* amenidadesArr,int cantidadAmenArr, Anfitrion* anfitrion);
-
-    // Destructor
+    // Constructor: copia cadenas C y prepara arreglos
+    Alojamiento(const char* cod, const char* nom, const char* tip, const char* dir, const char* depto, const char* muni, float precio, char** amenArr, int cantAmen, Anfitrion*Anf);
+    // Destructor: libera toda la memoria dinámica
     ~Alojamiento();
 
-    // Getters básicos
-    const string& getCodigo() const;
-    const string& getNombre() const;
-    const string& getTipo() const;
-    const string& getDireccion() const;
-    const string& getDepartamento() const;
-    const string& getMunicipio() const;
+    // Getters C-style
+    void getCodigo(char* buffer, int bufSize) const;
+    void getNombre(char* buffer, int bufSize) const;
+    void getTipo(char* buffer, int bufSize) const;
+    void getDireccion(char* buffer, int bufSize) const;
+    void getDepartamento(char* buffer, int bufSize) const;
+    void getMunicipio(char* buffer, int bufSize) const;
     float getPrecioPorNoche() const;
     Anfitrion* getAnfitrion() const;
 
     // Amenidades
-    string* getAmenidades() const;
     int getCantidadAmenidades() const;
+    void mostrarAmenidades() const;
 
-    // Reservas
+    // Reservas: agregar, anular y mostrar
     void agregarReserva(Reservacion* r);
-    void anularReserva(const string& codigoReserva);
-
-    //mostrar reservas del alojamiento
-     void mostrarReservas() const;
+    void anularReserva(const char* codRes);
+    void mostrarReservas() const;
 };
 
-#endif // ALOJAMIENTO_H
+#endif

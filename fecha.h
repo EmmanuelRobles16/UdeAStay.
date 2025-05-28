@@ -1,43 +1,53 @@
 #ifndef FECHA_H
 #define FECHA_H
 
-#include <string>
-
 class Fecha {
 private:
     int dia;
     int mes;
     int anio;
 
+    // Días por mes en año no bisiesto
+    static const int diasMes[12];
+
+    // Nombre de días y meses para formato largo
+    static const char* nombresDias[7];
+    static const char* nombresMeses[12];
+
+    // Auxiliares
+    static bool esBisiesto(int año);
+    static int diasEnMes(int m, int a);
+    static int calcularDiaSemana(int d, int m, int a);
+    static int parseInt(const char* s, int len);
+
 public:
-    // Constructores
-    Fecha();
-    Fecha(int d, int m, int a);
+    // Constructor por defecto y parametrizado
+    Fecha(int d = 1, int m = 1, int a = 1970);
 
-    // Getters
-    int getDia() const;
-    int getMes() const;
-    int getAnio() const;
+    // Validación de fecha
+    bool validar() const;
 
-    // Comparación
+    // Comparación cronológica
     bool esAnterior(const Fecha& otra) const;
 
-    // Operaciones
-    Fecha sumarDias(int n) const;
-    int toIndex() const;  // 0–364
+    // Aritmética de fechas
+    void sumarDias(int n);
 
-    // Representaciones textuales
-    std::string toStringCorto() const; // "YYYY-MM-DD"
-    std::string toStringLargo() const; // "jueves 15 de mayo del 2025"
+    // Formateo a cadena C
+    // buffer corto: mínimo 11 bytes ("YYYY-MM-DD" + '\0')
+    void toShortString(char* buffer) const;
 
-    // Utilidades estáticas
-    static int diasDelMes(int mes, int anio);
-    static std::string nombreMes(int mes);
-    static std::string nombreDiaSemana(int d, int m, int a);
-    static Fecha desdeString(const std::string& texto); // "YYYY-MM-DD"
+    // buffer largo: mínimo 50 bytes
+    void toLongString(char* buffer) const;
 
-    // despues de hablar con el profesor decidi quer voy a hacer la comprobacion de disponibilidad de alojamientos en el modulo fecha
-    static bool seCruzanRangos(const Fecha& inicio1, const Fecha& fin1, const Fecha& inicio2, const Fecha& fin2);
+    // Parseo desde cadena corta
+    static Fecha fromShortString(const char* s);
+
+    // Chequeo de rangos
+    static bool seCruzanRangos(
+        const Fecha& inicio1, const Fecha& fin1,
+        const Fecha& inicio2, const Fecha& fin2
+        );
 };
 
-#endif // FECHA_H
+#endif

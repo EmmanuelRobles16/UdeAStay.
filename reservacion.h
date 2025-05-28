@@ -1,88 +1,57 @@
 #ifndef RESERVACION_H
 #define RESERVACION_H
 
-#include <string>
 #include "Fecha.h"
-class Alojamiento;
+#include <cstdio>   // snprintf para escribir cadenas formateadas en buffers C
+#include <cstdlib>  // malloc, free para gestión de memoria en C
+
+class Alojamiento;  // Declaración adelantada
 class Huesped;
 
 class Reservacion {
 private:
-    std::string codigo;
-    Fecha fechaEntrada;
-    int duracion;
-    std::string metodoPago;
-    Fecha fechaPago;
-    float monto;
-    std::string anotacion;
-    Alojamiento* alojamiento;
-    Huesped* huesped;
+    char* codigo;            // Código único de la reserva (cadena C)
+    Fecha fechaEntrada;      // Fecha de inicio de la reserva
+    int duracion;            // Duración en días
+    char* metodoPago;        // Método de pago (efectivo, tarjeta, etc.)
+    Fecha fechaPago;         // Fecha de realización del pago
+    float monto;             // Monto total pagado
+    char* anotacion;         // Comentarios adicionales
+    Alojamiento* alojamiento; // Puntero al alojamiento asociado
+    Huesped* huesped;        // Puntero al huésped asociado
 
 public:
-    Reservacion(const std::string& codigo,const Fecha& fechaEntrada, int duracion,const std::string& metodoPago,const Fecha& fechaPago, float monto,  const std::string& anotacion, Alojamiento* alojamiento, Huesped* huesped);
+    // Constructor: copia cadenas C a memoria dinámica
+    Reservacion(const char* cod, const Fecha& fEntrada,  int dur, const char* metodo, const Fecha& fPago, float monto, const char* nota, Alojamiento* alo, Huesped* hue);
 
-    // Getters
-    std::string getCodigo() const;
+    // Destructor: libera memoria asignada con std::malloc usando std::free
+    ~Reservacion();
+
+    // Getters C-style: llenan buffer de tamaño bufSize
+    void getCodigo(char* buffer, int bufSize) const;
     Fecha getFechaEntrada() const;
-    int getDuracion() const;
-    std::string getMetodoPago() const;
+    int   getDuracion() const;
+    void  getMetodoPago(char* buffer, int bufSize) const;
     Fecha getFechaPago() const;
     float getMonto() const;
-    std::string getAnotacion() const;
+    void  getAnotacion(char* buffer, int bufSize) const;
     Alojamiento* getAlojamiento() const;
-    Huesped* getHuesped() const;
+    Huesped*     getHuesped() const;
 
-    // Utilidades
+    // Devuelve fecha de salida calculada: fechaEntrada + duracion
     Fecha fechaSalida() const;
-    std::string comprobante() const;
-    std::string getResumen() const;
+
+    // Crea resumen corto: "COD : YYYY-MM-DD - YYYY-MM-DD"
+    void toResumen(char* buffer, int bufSize) const;
+
+    // Crea comprobante detallado en buffer (texto formateado)
+    void toComprobante(char* buffer, int bufSize) const;
+
+    // Comprueba solapamiento con otro rango de fechas
     bool seCruzaCon(const Fecha& otraEntrada, int otraDuracion) const;
-    bool esDelHuesped(const std::string& doc) const;
+
+    // Verifica si la reservación pertenece a huésped con documento doc
+    bool esDelHuesped(const char* doc) const;
 };
 
-class RegistroReservas{
-public:
-    /**
-     * Inicializa el gestor con el array de huéspedes.
-     * Se crea internamente:
-     *  - un array global de Reservacion* (capacidad inicial 10)
-     *  - un arreglo de listas por huésped (capacidad inicial 4 cada una)
-     *
-     * @param huespedes     Punteros a los huéspedes existentes.
-     * @param cantHuespedes Número de huéspedes en la plataforma.
-     */
-    RegistroReservas(Huesped** huespedes, int cantHuespedes);
-    /** Libera toda la memoria asignada. */
-    ~RegistroReservas();
-
-    void cargarVigentes(const char* rutaArchivo,Alojamiento** alojamientos, int cantAlojamientos);
-
-    /**
-     * Devuelve el sub-array de Reservacion* para el huésped 'idx'.
-     * outCantidad se fija al número de reservas de ese huésped.
-     */
-    Reservacion** getReservasPorHuesped(int idx, int& outCantidad) const;
-
-private:
-    // Array global de todas las reservas
-    Reservacion** arreglo;
-    int  total;
-    int  capacidad;
-
-    // Listas por huésped
-    struct Lista {
-        Reservacion** datos;
-        int tam;    // cuántas reservas actualmente
-        int cap;// capacidad del array 'datos'
-    };
-    Lista*    porHues;     // tamaño = cantHuespedes
-    Huesped** listaHues;   // punteros originales
-    int       cantHues;
-
-    // Helpers para redimensionar
-    /** Duplicar capacidad del array global cuando esté lleno. */
-    void ensureGlobalCapacidad();
-     /** Duplicar capacidad de la lista de un huésped cuando esté llena. */
-    void ensureListaCapacidad(int idx);
-};
-#endif // RESERVACION_H
+#endif

@@ -1,141 +1,111 @@
 #include "fecha.h"
-#include <sstream>
-#include <iostream>
+#include <cstdio>   // sprintf
+#include <cstdlib>  // atoi, malloc/free si fuese necesario
 
-// Constructor por defecto
-Fecha::Fecha() : dia(1), mes(1), anio(2025) {}
+// Definición de días por mes (no bisiesto)
+const int Fecha::diasMes[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+// Mapas de nombres para día de la semana y mes
+const char* Fecha::nombresDias[7] = {
+    "domingo", "lunes", "martes", "miércoles",
+    "jueves", "viernes", "sábado"
+};
+const char* Fecha::nombresMeses[12] = {
+    "enero","febrero","marzo","abril","mayo","junio",
+    "julio","agosto","septiembre","octubre","noviembre","diciembre"
+};
 
-// Constructor con validación
-Fecha::Fecha(int d, int m, int a) {
-    // Validar año
-    if (a < 1) {
-        std::cerr << "Fecha inválida: año " << a
-                  << ". Usando año 1.\n";
-        anio = 1;
-    } else {
-        anio = a;
-    }
+// Constructor: asigna campos internos
+Fecha::Fecha(int d, int m, int a)
+    : dia(d), mes(m), anio(a) {}
 
-    // Validar mes
-    if (m < 1 || m > 12) {
-        std::cerr << "Fecha inválida: mes " << m
-                  << ". Usando mes 1.\n";
-        mes = 1;
-    } else {
-        mes = m;
-    }
-
-    // Validar día según mes y año
-    int dim = diasDelMes(mes, anio);
-    if (d < 1 || d > dim) {
-        std::cerr << "Fecha inválida: día " << d
-                  << " para " << mes << "/" << anio
-                  << ". Usando día 1.\n";
-        dia = 1;
-    } else {
-        dia = d;
-    }
+// Verifica año bisiesto: divisible por 4, no por 100 a menos que sea por 400
+bool Fecha::esBisiesto(int a) {
+    return (a % 4 == 0 && a % 100 != 0) || (a % 400 == 0);
 }
 
-// Getters
-int Fecha::getDia()    const { return dia; }
-int Fecha::getMes()    const { return mes; }
-int Fecha::getAnio()   const { return anio; }
+// Días en mes: febrero con 29 si bisiesto
+int Fecha::diasEnMes(int m, int a) {
+    if (m == 2 && esBisiesto(a)) return 29;
+    return diasMes[m - 1];
+}
 
-// Comparación cronológica
+// Valida rangos de año, mes y día
+bool Fecha::validar() const {
+    if (anio < 1 || mes < 1 || mes > 12) return false;
+    int dm = diasEnMes(mes, anio);
+    return dia >= 1 && dia <= dm;
+}
+
+// Comparación lexicográfica: año, luego mes, luego día
 bool Fecha::esAnterior(const Fecha& otra) const {
-    if (anio  < otra.anio) return true;
-    if (anio == otra.anio && mes  < otra.mes) return true;
-    if (anio == otra.anio && mes == otra.mes && dia < otra.dia) return true;
-    return false;
+    if (anio != otra.anio) return anio < otra.anio;
+    if (mes != otra.mes) return mes < otra.mes;
+    return dia < otra.dia;
 }
 
-// Día del año 0–364
-int Fecha::toIndex() const {
-    int idx = dia - 1;
-    for (int mm = 1; mm < mes; ++mm)
-        idx += diasDelMes(mm, anio);
-    return idx;
-}
-
-// Sumar n días (respeta fin de mes y años bisiestos)
-Fecha Fecha::sumarDias(int n) const {
-    int d = dia, m = mes, a = anio;
-    while (n > 0) {
-        int dim = diasDelMes(m, a);
-        if (d + n <= dim) {
-            d += n;
-            break;
-        }
-        n -= (dim - d + 1);
-        d = 1;
-        if (++m > 12) { m = 1; ++a; }
+// Suma/resta días ajustando a nuevo mes/año automáticamente
+void Fecha::sumarDias(int n) {
+    dia += n;
+    // Ajuste positivo
+    while (dia > diasEnMes(mes, anio)) {
+        dia -= diasEnMes(mes, anio);
+        mes++;
+        if (mes > 12) { mes = 1; anio++; }
     }
+    // Ajuste negativo
+    while (dia < 1) {
+        mes--;
+        if (mes < 1) { mes = 12; anio--; }
+        dia += diasEnMes(mes, anio);
+    }
+}
+
+// Parsea dígitos de s[0..len-1] a entero
+int Fecha::parseInt(const char* s, int len) {
+    int v = 0;
+    for (int i = 0; i < len; ++i) {
+        char c = s[i]; if (c < '0' || c > '9') break;
+        v = v * 10 + (c - '0');
+    }
+    return v;
+}
+
+// Crea fecha desde string corto YYYY-MM-DD
+Fecha Fecha::fromShortString(const char* s) {
+    int a = parseInt(s + 0, 4);
+    int m = parseInt(s + 5, 2);
+    int d = parseInt(s + 8, 2);
     return Fecha(d, m, a);
 }
 
-// Formato "YYYY-MM-DD"
-std::string Fecha::toStringCorto() const {
-    std::ostringstream ss;
-    ss << anio << '-'
-       << (mes < 10 ? "0" : "") << mes << '-'
-       << (dia < 10 ? "0" : "") << dia;
-    return ss.str();
+// Escribe "YYYY-MM-DD" en buffer
+void Fecha::toShortString(char* buffer) const {
+    // %04d => rellena con ceros a 4 dígitos
+    std::sprintf(buffer, "%04d-%02d-%02d", anio, mes, dia);
 }
 
-// Formato largo en español
-std::string Fecha::toStringLargo() const {
-    static const char* nombresDias[7] = {
-        "domingo","lunes","martes","miércoles",
-        "jueves","viernes","sábado"
-    };
-    static const char* nombresMeses[12] = {
-        "enero","febrero","marzo","abril","mayo","junio",
-        "julio","agosto","septiembre","octubre","noviembre","diciembre"
-    };
-
-    // Cálculo día de la semana
-    static const int t[] = {0,3,2,5,0,3,5,1,4,6,2,4};
-    int y = anio - (mes < 3);
-    int w = (y + y/4 - y/100 + y/400 + t[mes-1] + dia) % 7;
-
-    std::ostringstream ss;
-    ss << nombresDias[w] << ' '
-       << dia << " de "
-       << nombresMeses[mes-1] << " del "
-       << anio;
-    return ss.str();
+// Calcula día de la semana con Zeller (0=domingo)
+int Fecha::calcularDiaSemana(int d, int m, int a) {
+    if (m < 3) { m += 12; a -= 1; }
+    int K = a % 100;
+    int J = a / 100;
+    int h = (d + (13*(m+1))/5 + K + K/4 + J/4 + 5*J) % 7;
+    return (h + 6) % 7; // convertir 0=sábado a 0=domingo
 }
 
-// Días en un mes (incluye bisiesto)
-int Fecha::diasDelMes(int mes, int anio) {
-    static const int tabla[] = {
-        31,28,31,30,31,30,31,31,30,31,30,31
-    };
-    if (mes == 2) {
-        bool bisiesto = (anio % 400 == 0) ||
-                        (anio % 4 == 0 && anio % 100 != 0);
-        return bisiesto ? 29 : 28;
-    }
-    return tabla[mes-1];
+// Escribe formato largo "jueves 15 de mayo del 2025"
+void Fecha::toLongString(char* buffer) const {
+    int dow = calcularDiaSemana(dia, mes, anio);
+    const char* nd = nombresDias[dow];
+    const char* nm = nombresMeses[mes - 1];
+    std::sprintf(buffer, "%s %d de %s del %d", nd, dia, nm, anio);
 }
 
-// Parsea "YYYY-MM-DD" y usa el constructor validado
-Fecha Fecha::desdeString(const std::string& texto) {
-    int y, mo, d;
-    char sep;
-    std::istringstream ss(texto);
-    ss >> y >> sep >> mo >> sep >> d;
-    return Fecha(d, mo, y);
-}
-//la funcionalidad de comparacion de disponibilidad
-bool Fecha::seCruzanRangos(const Fecha& inicio1,
-                           const Fecha& fin1,
-                           const Fecha& inicio2,
-                           const Fecha& fin2)
-{
-    // No se cruzan si uno termina **antes** de que empiece el otro
-    if (fin1.esAnterior(inicio2) || fin2.esAnterior(inicio1))
-        return false;
-    return true;
+// Verifica si dos rangos de fechas se solapan
+bool Fecha::seCruzanRangos(
+    const Fecha& i1, const Fecha& f1,
+    const Fecha& i2, const Fecha& f2
+    ) {
+    // No se cruzan si fin1 < inicio2 o fin2 < inicio1
+    return !(f1.esAnterior(i2) || f2.esAnterior(i1));
 }

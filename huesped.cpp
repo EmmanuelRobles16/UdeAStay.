@@ -1,39 +1,62 @@
 #include "Huesped.h"
-#include "Reservacion.h"
-#include <iostream>
+#include <cstring> // strlen, strcpy
 
-Huesped::Huesped(const string& doc, int antig, float punt, const string& pwd)
-    : documento(doc), antiguedad(antig), puntuacion(punt), password(pwd),
-    cantidadReservas(0), capacidadReservas(5)
+// Constructor: copia cadenas y crea arreglo inicial
+Huesped::Huesped(const char* doc, int antig, float punt, const char* pwd)
+    : antiguedad(antig), puntuacion(punt), cantidadReservas(0), capacidadReservas(5)
 {
-    reservaciones = new Reservacion*[capacidadReservas];
+    // Copiar documento a memoria dinámica
+    int lenDoc = std::strlen(doc) + 1;
+    documento = (char*)std::malloc(lenDoc);
+    std::strcpy(documento, doc);
+
+    // Copiar password a memoria dinámica
+    int lenPwd = std::strlen(pwd) + 1;
+    password = (char*)std::malloc(lenPwd);
+    std::strcpy(password, pwd);
+
+    // Crear arreglo de Reservacion* con malloc
+    reservaciones = (Reservacion**)std::malloc(sizeof(Reservacion*) * capacidadReservas);
 }
 
+// Destructor: libera cadenas y arreglo
 Huesped::~Huesped() {
-    delete[] reservaciones;
+    std::free(documento);
+    std::free(password);
+    std::free(reservaciones);
 }
 
-string Huesped::getDocumento() const { return documento; }
-float  Huesped::getPuntuacion() const { return puntuacion; }
-int    Huesped::getAntiguedad() const { return antiguedad; }
-string Huesped::getPassword() const  { return password; }  // ← implementación
+
+void Huesped::getDocumento(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", documento);
+}
+
+int Huesped::getAntiguedad() const {
+    return antiguedad;
+}
+
+float Huesped::getPuntuacion() const {
+    return puntuacion;
+}
+
+void Huesped::getPassword(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", password);
+}
 
 void Huesped::mostrarReservas() const {
-    for (int i = 0; i < cantidadReservas; ++i)
-        cout << reservaciones[i]->getResumen() << endl;
+    char resumen[256];
+    for (int i = 0; i < cantidadReservas; ++i) {
+        // Suponiendo Reservacion tiene método toResumen(char*, int)
+        reservaciones[i]->toResumen(resumen, sizeof(resumen));
+        std::printf("%s\n", resumen);
+    }
 }
 
 void Huesped::agregarReserva(Reservacion* r) {
-    // Si el array está lleno, duplicamos capacidad
     if (cantidadReservas == capacidadReservas) {
         int nuevaCap = capacidadReservas * 2;
-        Reservacion** tmp = new Reservacion*[nuevaCap];
-        for (int i = 0; i < cantidadReservas; ++i)
-            tmp[i] = reservaciones[i];
-        delete[] reservaciones;
-        reservaciones = tmp;
+        reservaciones = (Reservacion**)std::realloc(reservaciones, sizeof(Reservacion*) * nuevaCap);
         capacidadReservas = nuevaCap;
     }
-    // Añadimos la nueva reserva
     reservaciones[cantidadReservas++] = r;
 }

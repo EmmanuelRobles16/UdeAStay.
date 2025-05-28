@@ -1,20 +1,22 @@
 #ifndef PLATAFORMA_H
 #define PLATAFORMA_H
 
-#include <string>
 #include "Huesped.h"
 #include "Anfitrion.h"
-#include "alojamiento.h"
-#include "reservacion.h"
+#include "Alojamiento.h"
+#include "Reservacion.h"
+#include <cstdio>   // printf, snprintf
+#include <cstdlib>  // malloc, free, realloc
+#include <cstring>  // strlen, strcmp
 
-
-//simplemente una enumaracion la cual nos dice que tipo es del usuario que esta entrand
+// Indica el tipo de usuario autenticado
 enum class TipoUsuario {
     Ninguno,
     Huesped,
     Anfitrion
 };
 
+// Resultado de autenticación: tipo y puntero al usuario
 struct ResultadoLogin {
     TipoUsuario tipo;
     Huesped*   huesped;
@@ -23,12 +25,31 @@ struct ResultadoLogin {
 
 class Plataforma {
 public:
-    /** Solicita documento y contraseña por consola, busca en ambos arrays y retorna un ResultadoLogin con el tipo y el puntero al usuario. */
-    static ResultadoLogin autenticar(Huesped** huespedes, int cantidadHuespedes, Anfitrion** anfitriones, int cantidadAnfitriones);
+    /**
+     * Solicita credenciales por consola (documento y contraseña C-style),
+     * busca en arreglos de Huesped* y Anfitrion* y retorna ResultadoLogin.
+     */
+    static ResultadoLogin autenticar(
+        Huesped** huespedes, int cantidadHuespedes,
+        Anfitrion** anfitriones, int cantidadAnfitriones
+        );
 
-    /** Ejecuta el menú de opciones para un anfitrión autenticado, hasta que elija salir. */
-    static void runMenuAnfitrion(Anfitrion* anfitrion, Alojamiento** alojamientos, int cantidadAlojamientos, Reservacion** vigentes, int cantV, Reservacion** historico, int cantHisto);
-    static void runMenuHuesped(Huesped* huesped, Reservacion** reservas, int cantidadRes);
+    /**
+     * Menú para Anfitrion autenticado: muestra opciones y lee con scanf.
+     */
+    static void runMenuAnfitrion(
+        Anfitrion* anfitrion,
+        Alojamiento** alojamientos, int cantidadAlojamientos
+        );
+
+    /**
+     * Menú para Huesped autenticado: muestra opciones y lee con scanf.
+     */
+    static void runMenuHuesped(
+        Huesped* huesped,
+        Reservacion** reservas, int cantidadRes,
+        Reservacion** historico, int cantidadHist
+        );
 };
 
-#endif // PLATAFORMA_H
+#endif

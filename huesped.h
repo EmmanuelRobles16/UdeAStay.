@@ -1,34 +1,38 @@
 #ifndef HUESPED_H
 #define HUESPED_H
 
-#include <string>
-using namespace std;
-
-class Reservacion;
-class Fecha;
+#include <cstdio>  // printf, sprintf
+#include <cstdlib> // malloc, free, atoi
+#include "Reservacion.h"
 
 class Huesped {
 private:
-    string documento;
-    int antiguedad;
-    float puntuacion;
-    string password;              // ← nuevo atributo
+    char* documento;           // Cédula o pasaporte
+    int antiguedad;            // Años en el sistema
+    float puntuacion;          // Rating acumulado
+    char* password;            // Contraseña
+
+    // Puntero a arreglo dinámico de Reservacion*
     Reservacion** reservaciones;
     int cantidadReservas;
     int capacidadReservas;
 
 public:
-    // Ahora recibe también la contraseña
-    Huesped(const string& doc, int antig, float punt, const string& pwd);
+    // Constructor y destructor
+    Huesped(const char* doc, int antig, float punt, const char* pwd);
     ~Huesped();
 
-    string getDocumento() const;
+    // Getters con buffers C-style
+    void getDocumento(char* buffer, int bufSize) const;
+    int  getAntiguedad() const;
     float getPuntuacion() const;
-    int getAntiguedad() const;
-    string getPassword() const;   // ← nuevo getter
+    void getPassword(char* buffer, int bufSize) const;
 
-    void agregarReserva(Reservacion* r);
+    // Mostrar reservaciones usando printf
     void mostrarReservas() const;
+
+    // Añadir una Reservacion*
+    void agregarReserva(Reservacion* r);
 };
 
-#endif // HUESPED_H
+#endif

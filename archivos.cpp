@@ -1,326 +1,384 @@
-#include "archivos.h"
-#include "huesped.h"
-#include "anfitrion.h"
-#include "alojamiento.h"
-#include "reservacion.h"
+#include "Archivos.h"
+#include "Huesped.h"
+#include "Anfitrion.h"
+#include "Alojamiento.h"
+#include "Reservacion.h"
 #include "Fecha.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
 
-using namespace std;
-
-// Utilidad para partir cadenas
-string* Archivo::split(const string& str, char delimitador, int& totalPartes) {
+// split: utiliza malloc para asignar array de punteros a char
+char** Archivo::split(const char* str, char delimitador, int& totalPartes) {
+    // Calcula máximo de tokens (estimado)
+    int maxTokens = 20;
+    char** resultado = (char**)std::malloc(sizeof(char*) * maxTokens);
     totalPartes = 0;
-    stringstream ss(str);
-    string parte;
-    // Reserva espacio para hasta 20 tokens
-    string* resultado = new string[20];
-    while (getline(ss, parte, delimitador) && totalPartes < 20) {
-        resultado[totalPartes++] = parte;
+
+    // Copiar cadena para modificar
+    char* buffer = (char*)std::malloc(std::strlen(str) + 1);
+    std::strcpy(buffer, str);
+    char* token = std::strtok(buffer, &delimitador);
+    while (token && totalPartes < maxTokens) {
+        int len = std::strlen(token) + 1;
+        resultado[totalPartes] = (char*)std::malloc(len);  // malloc para cada token
+        std::strcpy(resultado[totalPartes], token);
+        totalPartes++;
+        token = std::strtok(NULL, &delimitador);
     }
+    std::free(buffer);
     return resultado;
 }
 
-// Carga de huéspedes
+// Ejemplo de lectura de Huespedes desde "huespedes.txt"
 void Archivo::cargarHuespedes(Huesped**& huespedes, int& cantidad) {
-    ifstream archivo("huespedes.txt");
-    if (!archivo.is_open()) {
-        cerr << "Error al abrir huespedes.txt\n";
-        cantidad = 0;
-        huespedes = nullptr;
+    FILE* fp = std::fopen("huespedes.txt", "r");
+    if (!fp) {
+        printf("Error al abrir huespedes.txt\n");
+        huespedes = NULL; cantidad = 0;
         return;
     }
 
-    string linea;
     int capacidad = 10;
+    huespedes = (Huesped**)std::malloc(sizeof(Huesped*) * capacidad);
     cantidad = 0;
-    huespedes = new Huesped*[capacidad];
 
-    while (getline(archivo, linea)) {
-        if (linea.empty() || linea[0] == '#') continue;
-        int nTokens = 0;
-        string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 4) { delete[] tokens; continue; }
+    char linea[256];
+    while (std::fgets(linea, sizeof(linea), fp)) {
+        if (linea[0] == '#' || std::strlen(linea) < 2) continue;
 
-        string doc = tokens[0];
-        int antig    = stoi(tokens[1]);
-        float punt   = stof(tokens[2]);
-        string pwd = tokens[3];
-        delete[] tokens;
+        int nTokens;
+        char** tokens = split(linea, '|', nTokens);
+        if (nTokens < 4) {
+            for (int i = 0; i < nTokens; ++i) std::free(tokens[i]);
+            std::free(tokens);
+            continue;
+        }
 
+        // Copiar valores antes de liberar los tokens
+        char* docCpy = (char*)std::malloc(std::strlen(tokens[0]) + 1);
+        std::strcpy(docCpy, tokens[0]);
+
+        int antig = std::atoi(tokens[1]);
+        float punt = std::atof(tokens[2]);
+
+        char* pwdCpy = (char*)std::malloc(std::strlen(tokens[3]) + 1);
+        std::strcpy(pwdCpy, tokens[3]);
+
+        for (int i = 0; i < nTokens; ++i) std::free(tokens[i]);
+        std::free(tokens);
+
+        // Redimensionar si es necesario
         if (cantidad == capacidad) {
             capacidad *= 2;
-            Huesped** tmp = new Huesped*[capacidad];
-            for (int i = 0; i < cantidad; ++i) tmp[i] = huespedes[i];
-            delete[] huespedes;
-            huespedes = tmp;
+            huespedes = (Huesped**)std::realloc(huespedes, sizeof(Huesped*) * capacidad);
         }
-        huespedes[cantidad++] = new Huesped(doc, antig, punt, pwd);
+
+        // Crear huésped con copia segura
+        huespedes[cantidad++] = new Huesped(docCpy, antig, punt, pwdCpy);
+
+        std::free(docCpy);
+        std::free(pwdCpy);
     }
 
-    archivo.close();
+    std::fclose(fp);
 }
-
-// Carga de anfitriones
 void Archivo::cargarAnfitriones(Anfitrion**& anfitriones, int& cantidad) {
-    ifstream archivo("anfitriones.txt");
-    if (!archivo.is_open()) {
-        cerr << "Error al abrir anfitriones.txt\n";
-        cantidad = 0;
+    FILE* fp = std::fopen("anfitriones.txt", "r");
+    if (!fp) {
+        printf("Error al abrir anfitriones.txt\n");
         anfitriones = nullptr;
+        cantidad = 0;
         return;
     }
-
-    string linea;
     int capacidad = 10;
+    anfitriones = (Anfitrion**)std::malloc(sizeof(Anfitrion*) * capacidad);
     cantidad = 0;
-    anfitriones = new Anfitrion*[capacidad];
+    char linea[512];
 
-    while (getline(archivo, linea)) {
-        if (linea.empty() || linea[0] == '#') continue;
-        int nTokens = 0;
-        string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 5) { delete[] tokens; continue; }
+    while (std::fgets(linea, sizeof(linea), fp)) {
+        if (linea[0] == '#' || std::strlen(linea) < 2) continue;
+        int nTok;
+        char** tok = split(linea, '|', nTok);
+        if (nTok < 5) {
+            for (int i = 0; i < nTok; ++i) std::free(tok[i]);
+            std::free(tok);
+            continue;
+        }
+        const char* doc   = tok[0];
+        int         antig = std::atoi(tok[1]);
+        float       punt  = std::atof(tok[2]);
+        const char* pwd   = tok[3];
 
-        string doc = tokens[0];
-        int antig  = stoi(tokens[1]);
-        float punt = stof(tokens[2]);
-        string pwd = tokens[3];
+        // parse lista de códigos de alojamiento
+        int numCod;
+        char** codigos = split(tok[4], ',', numCod);
 
-        int nCods = 0;
-        string* cods = split(tokens[4], ',', nCods);
-        delete[] tokens;
+        // liberar tokens intermedios
+        for (int i = 0; i < nTok; ++i) std::free(tok[i]);
+        std::free(tok);
 
+        // crecer arreglo si hace falta
         if (cantidad == capacidad) {
             capacidad *= 2;
-            Anfitrion** tmp = new Anfitrion*[capacidad];
-            for (int i = 0; i < cantidad; ++i) tmp[i] = anfitriones[i];
-            delete[] anfitriones;
-            anfitriones = tmp;
+            anfitriones = (Anfitrion**)std::realloc(anfitriones, sizeof(Anfitrion*) * capacidad);
         }
-        anfitriones[cantidad++] = new Anfitrion(doc, antig, punt, pwd, cods, nCods);
-        delete[] cods;
+        // crear instancia
+        anfitriones[cantidad++] =
+            new Anfitrion(doc, antig, punt, pwd, (const char**)codigos, numCod);
+
+        // liberar listaCod
+        for (int i = 0; i < numCod; ++i) std::free(codigos[i]);
+        std::free(codigos);
     }
-
-    archivo.close();
+    std::fclose(fp);
 }
-
-// Carga de alojamientos
-void Archivo::cargarAlojamientos(Alojamiento**& alojamientos,
-                                 int& cantidad,
-                                 Anfitrion** anfitriones,
-                                 int cantidadAnfitriones)
-{
-    ifstream archivo("alojamientos.txt");
-    if (!archivo.is_open()) {
-        cerr << "Error al abrir alojamientos.txt\n";
-        cantidad = 0;
+void Archivo::cargarAlojamientos(Alojamiento**& alojamientos, int& cantidad, Anfitrion** anfitriones, int cantidadAnf) {
+    FILE* fp = std::fopen("alojamientos.txt", "r");
+    if (!fp) {
+        printf("Error al abrir alojamientos.txt\n");
         alojamientos = nullptr;
-        return;
-    }
-
-    string linea;
-    int capacidad = 10;
-    cantidad = 0;
-    alojamientos = new Alojamiento*[capacidad];
-
-    while (getline(archivo, linea)) {
-        if (linea.empty() || linea[0] == '#') continue;
-        int nTokens = 0;
-        string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 9) { delete[] tokens; continue; }
-
-        string codigo    = tokens[0];
-        string nombre    = tokens[1];
-        string docAnf    = tokens[2];
-        string depto     = tokens[3];
-        string municipio = tokens[4];
-        string tipo      = tokens[5];
-        string direccion = tokens[6];
-        float precio     = stof(tokens[7]);
-
-        int nAmen = 0;
-        string* amenList = split(tokens[8], ',', nAmen);
-        delete[] tokens;
-
-        Anfitrion* anfit = nullptr;
-        for (int i = 0; i < cantidadAnfitriones; ++i) {
-            if (anfitriones[i]->getDocumento() == docAnf) {
-                anfit = anfitriones[i];
-                break;
-            }
-        }
-
-        if (cantidad == capacidad) {
-            capacidad *= 2;
-            Alojamiento** tmp = new Alojamiento*[capacidad];
-            for (int i = 0; i < cantidad; ++i) tmp[i] = alojamientos[i];
-            delete[] alojamientos;
-            alojamientos = tmp;
-        }
-        alojamientos[cantidad++] = new Alojamiento(
-            codigo, nombre, tipo, direccion,
-            depto, municipio, precio,
-            amenList, nAmen,
-            anfit
-            );
-        delete[] amenList;
-    }
-
-    archivo.close();
-}
-
-// Carga de reservas vigentes
-void Archivo::cargarReservasVigentes(Reservacion**& reservas, int& cantidad, Alojamiento** alojamientos, int cantidadAloj, Huesped** huespedes, int cantidadHues)
-{
-    ifstream archivo("reservas_vigentes.txt");
-    if (!archivo.is_open()) {
-        cerr << "Error al abrir reservas_vigentes.txt\n";
         cantidad = 0;
-        reservas = nullptr;
         return;
     }
 
-    string linea;
     int capacidad = 10;
+    alojamientos = (Alojamiento**)std::malloc(sizeof(Alojamiento*) * capacidad);
     cantidad = 0;
-    reservas = new Reservacion*[capacidad];
+    char linea[1024];
 
-    while (getline(archivo, linea)) {
-        if (linea.empty() || linea[0] == '#') continue;
-        int nTokens = 0;
-        string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 9) { delete[] tokens; continue; }
+    while (std::fgets(linea, sizeof(linea), fp)) {
+        if (linea[0] == '#' || std::strlen(linea) < 2) continue;
 
-        string codRes    = tokens[0];
-        string codAloj   = tokens[1];
-        string docHues   = tokens[2];
-        string strFechaE = tokens[3];
-        int duracion     = stoi(tokens[4]);
-        string metPago   = tokens[5];
-        string strFechaP = tokens[6];
-        float monto      = stof(tokens[7]);
-        string anotacion = tokens[8];
-        delete[] tokens;
+        int nTok;
+        char** tok = split(linea, '|', nTok);
+        if (nTok < 9) {
+            for (int i = 0; i < nTok; ++i) std::free(tok[i]);
+            std::free(tok);
+            continue;
+        }
 
-        Alojamiento* aloj = nullptr;
-        for (int i = 0; i < cantidadAloj; ++i) {
-            if (alojamientos[i]->getCodigo() == codAloj) {
-                aloj = alojamientos[i];
+        const char* cod      = tok[0];
+        const char* nom      = tok[1];
+        const char* tip      = tok[2];
+        const char* dir      = tok[3];
+        const char* dep      = tok[4];
+        const char* muni     = tok[5];
+        float       precio   = std::atof(tok[6]);
+
+        // lista de amenidades
+        int numAm;
+        char** ams = split(tok[7], ',', numAm);
+
+        // documento del anfitrión con limpieza de saltos de línea
+        const char* docAnfRaw = tok[8];
+        char* docAnf = (char*)std::malloc(strlen(docAnfRaw) + 1);
+        std::strcpy(docAnf, docAnfRaw);
+        Archivo::trimNewline(docAnf);  // ✅ Limpia '\n' y '\r'
+
+        // buscar anfitrión correspondiente
+        Anfitrion* ptrAnf = nullptr;
+        char buf[64];
+        for (int i = 0; i < cantidadAnf; ++i) {
+            anfitriones[i]->getDocumento(buf, sizeof(buf));
+            Archivo::trimNewline(buf);  // Limpieza también en el comparado
+            if (std::strcmp(buf, docAnf) == 0) {
+                ptrAnf = anfitriones[i];
                 break;
             }
         }
-        Huesped* hues = nullptr;
-        for (int i = 0; i < cantidadHues; ++i) {
-            if (huespedes[i]->getDocumento() == docHues) {
-                hues = huespedes[i];
-                break;
-            }
-        }
+        std::free(docAnf);
 
-        Fecha fechaE = Fecha::desdeString(strFechaE);
-        Fecha fechaP = Fecha::desdeString(strFechaP);
+        for (int i = 0; i < nTok; ++i) std::free(tok[i]);
+        std::free(tok);
 
         if (cantidad == capacidad) {
             capacidad *= 2;
-            Reservacion** tmp = new Reservacion*[capacidad];
-            for (int i = 0; i < cantidad; ++i) tmp[i] = reservas[i];
-            delete[] reservas;
-            reservas = tmp;
+            alojamientos = (Alojamiento**)std::realloc(alojamientos, sizeof(Alojamiento*) * capacidad);
         }
 
-        reservas[cantidad++] = new Reservacion(
-            codRes, fechaE, duracion,
-            metPago, fechaP, monto,
-            anotacion, aloj, hues
-            );
+        alojamientos[cantidad++] =
+            new Alojamiento(cod, nom, tip, dir, dep, muni, precio, ams, numAm, ptrAnf);
 
-        Reservacion* r = new Reservacion(
-            codRes, fechaE, duracion,
-            metPago, fechaP, monto,
-            anotacion, aloj, hues
-            );
-
-        // 2) Registramos esa reserva dentro de
-        //    su alojamiento *y* en su huésped:
-        if (aloj) aloj->agregarReserva(r);
-        if (hues) hues->agregarReserva(r);
-
-        // 3) Finalmente la guardamos en el array global
-        reservas[cantidad++] = r;
+        for (int i = 0; i < numAm; ++i) std::free(ams[i]);
+        std::free(ams);
     }
 
-    archivo.close();
+    std::fclose(fp);
 }
-
-// Carga de reservas históricas
-void Archivo::cargarReservasHistoricas(Reservacion**& reservas, int& cantidad,  Alojamiento** alojamientos, int cantidadAloj,  Huesped** huespedes, int cantidadHues)
-{
-    ifstream archivo("reservas_historico.txt");
-    if (!archivo.is_open()) {
-        cerr << "Error al abrir reservas_historico.txt\n";
+void Archivo::cargarReservasVigentes(
+    Reservacion**& reservas, int& cantidad,
+    Alojamiento** alojamientos, int cantAl,
+    Huesped** huespedes, int cantH
+    ) {
+    FILE* fp = std::fopen("reservas_vigentes.txt", "r");
+    if (!fp) {
+        printf("Error al abrir reservas_vigentes.txt\n");
+        reservas = nullptr;
         cantidad = 0;
-        reservas = nullptr;
         return;
     }
 
-    string linea;
     int capacidad = 10;
+    reservas = (Reservacion**)std::malloc(sizeof(Reservacion*) * capacidad);
     cantidad = 0;
-    reservas = new Reservacion*[capacidad];
 
-    while (getline(archivo, linea)) {
-        if (linea.empty() || linea[0] == '#') continue;
-        int nTokens = 0;
-        string* tokens = split(linea, '|', nTokens);
-        if (nTokens < 9) { delete[] tokens; continue; }
+    char linea[1024];
+    while (std::fgets(linea, sizeof(linea), fp)) {
+        if (linea[0] == '#' || std::strlen(linea) < 2) continue;
 
-        string codRes    = tokens[0];
-        string codAloj   = tokens[1];
-        string docHues   = tokens[2];
-        string strFechaE = tokens[3];
-        int duracion     = stoi(tokens[4]);
-        string metPago   = tokens[5];
-        string strFechaP = tokens[6];
-        float monto      = stof(tokens[7]);
-        string anotacion = tokens[8];
-        delete[] tokens;
+        int nTok;
+        char** t = split(linea, '|', nTok);
+        if (nTok < 9) {
+            for (int i = 0; i < nTok; ++i) std::free(t[i]);
+            std::free(t);
+            continue;
+        }
 
-        Alojamiento* aloj = nullptr;
-        for (int i = 0; i < cantidadAloj; ++i) {
-            if (alojamientos[i]->getCodigo() == codAloj) {
-                aloj = alojamientos[i];
+        const char* codR   = t[0];
+        const char* codAl  = t[1];
+        const char* docH   = t[2];
+        Fecha       fEnt   = Fecha::fromShortString(t[3]);
+        int         dur    = std::atoi(t[4]);
+        const char* met    = t[5];
+        Fecha       fPago  = Fecha::fromShortString(t[6]);
+        float       monto  = std::atof(t[7]);
+        const char* nota   = t[8];
+
+        // Buscar puntero al alojamiento
+        Alojamiento* pa = nullptr;
+        for (int i = 0; i < cantAl; ++i) {
+            char buf[64];
+            alojamientos[i]->getCodigo(buf, sizeof(buf));
+            if (std::strcmp(buf, codAl) == 0) {
+                pa = alojamientos[i];
                 break;
             }
         }
-        Huesped* hues = nullptr;
-        for (int i = 0; i < cantidadHues; ++i) {
-            if (huespedes[i]->getDocumento() == docHues) {
-                hues = huespedes[i];
+
+        // Buscar puntero al huésped
+        Huesped* ph = nullptr;
+        for (int j = 0; j < cantH; ++j) {
+            char buf[64];
+            huespedes[j]->getDocumento(buf, sizeof(buf));
+            if (std::strcmp(buf, docH) == 0) {
+                ph = huespedes[j];
                 break;
             }
         }
 
-        Fecha fechaE = Fecha::desdeString(strFechaE);
-        Fecha fechaP = Fecha::desdeString(strFechaP);
+        for (int i = 0; i < nTok; ++i) std::free(t[i]);
+        std::free(t);
+
+        // Si no se encuentra alguno de los punteros, se ignora la reserva
+        if (!pa || !ph) continue;
+
+        // Redimensionar si hace falta
+        if (cantidad == capacidad) {
+            capacidad *= 2;
+            reservas = (Reservacion**)std::realloc(reservas, sizeof(Reservacion*) * capacidad);
+        }
+
+        // Crear la reserva
+        Reservacion* nueva = new Reservacion(codR, fEnt, dur, met, fPago, monto, nota, pa, ph);
+
+        // Agregar a arreglo global
+        reservas[cantidad++] = nueva;
+
+        // ✅ Agregar al alojamiento y al huésped
+        pa->agregarReserva(nueva);
+        ph->agregarReserva(nueva);
+    }
+
+    std::fclose(fp);
+}
+
+
+// ---------------------------------------------------------------
+// Implementación de cargarReservasHistoricas
+// lee “reservas_historicas.txt” (idéntico al anterior)
+// ---------------------------------------------------------------
+void Archivo::cargarReservasHistoricas(
+    Reservacion**& reservas, int& cantidad,
+    Alojamiento** alojamientos, int cantAl,
+    Huesped** huespedes, int cantH
+    ) {
+    FILE* fp = std::fopen("reservas_historico.txt", "r");
+    if (!fp) {
+        printf("Error al abrir reservas_historico.txt\n");
+        reservas = nullptr;
+        cantidad = 0;
+        return;
+    }
+
+    int capacidad = 10;
+    reservas = (Reservacion**)std::malloc(sizeof(Reservacion*) * capacidad);
+    cantidad = 0;
+
+    char linea[1024];
+    while (std::fgets(linea, sizeof(linea), fp)) {
+        if (linea[0] == '#' || std::strlen(linea) < 2) continue;
+
+        int nTok;
+        char** t = split(linea, '|', nTok);
+        if (nTok < 9) {
+            for (int i = 0; i < nTok; ++i) std::free(t[i]);
+            std::free(t);
+            continue;
+        }
+
+        const char* codR   = t[0];
+        const char* codAl  = t[1];
+        const char* docH   = t[2];
+        Fecha       fEnt   = Fecha::fromShortString(t[3]);
+        int         dur    = std::atoi(t[4]);
+        const char* met    = t[5];
+        Fecha       fPago  = Fecha::fromShortString(t[6]);
+        float       monto  = std::atof(t[7]);
+        const char* nota   = t[8];
+
+        Alojamiento* pa = nullptr;
+        for (int i = 0; i < cantAl; ++i) {
+            char buf[64];
+            alojamientos[i]->getCodigo(buf, sizeof(buf));
+            if (std::strcmp(buf, codAl) == 0) {
+                pa = alojamientos[i];
+                break;
+            }
+        }
+
+        Huesped* ph = nullptr;
+        for (int j = 0; j < cantH; ++j) {
+            char buf[64];
+            huespedes[j]->getDocumento(buf, sizeof(buf));
+            if (std::strcmp(buf, docH) == 0) {
+                ph = huespedes[j];
+                break;
+            }
+        }
+
+        for (int i = 0; i < nTok; ++i) std::free(t[i]);
+        std::free(t);
+
+        if (!pa || !ph || !pa->getAnfitrion()) {
+            printf("❌ RH %s NO CARGADA\n", codR);
+            continue;
+        }
 
         if (cantidad == capacidad) {
             capacidad *= 2;
-            Reservacion** tmp = new Reservacion*[capacidad];
-            for (int i = 0; i < cantidad; ++i) tmp[i] = reservas[i];
-            delete[] reservas;
-            reservas = tmp;
+            reservas = (Reservacion**)std::realloc(reservas, sizeof(Reservacion*) * capacidad);
         }
 
-        reservas[cantidad++] = new Reservacion(
-            codRes, fechaE, duracion,
-            metPago, fechaP, monto,
-            anotacion, aloj, hues
-            );
+        Reservacion* nueva = new Reservacion(codR, fEnt, dur, met, fPago, monto, nota, pa, ph);
+        reservas[cantidad++] = nueva;
     }
 
-    archivo.close();
+    std::fclose(fp);
 }
 
+
+void Archivo::trimNewline(char* s) {
+    int len = std::strlen(s);
+    while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r')) {
+        s[len - 1] = '\0';
+        len--;
+    }
+}

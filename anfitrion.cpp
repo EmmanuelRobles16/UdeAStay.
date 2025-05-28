@@ -1,87 +1,143 @@
 #include "Anfitrion.h"
-#include "alojamiento.h"
-#include "reservacion.h"
-#include <iostream>
+#include "archivos.h"
+#include <cstring>
+#include <cstdio>
+extern Reservacion** reservasHistoricas;
+extern int cantidadHistoricas;
 
-Anfitrion::Anfitrion(const string& doc, int antig, float punt,
-                     const string& pwd, string* codigos, int numCodigos)
-    : documento(doc), antiguedad(antig), puntuacion(punt),
-    password(pwd), cantidadAlojamientos(numCodigos),
-    capacidadAlojamientos(numCodigos)
+// Constructor: copia cadenas y arreglo de códigos
+Anfitrion::Anfitrion(const char* doc, int antig, float punt, const char* pwd, const char** codigos, int numCodigos)
+    : antiguedad(antig), puntuacion(punt), cantidadAlojamientos(numCodigos), capacidadAlojamientos(numCodigos)
 {
-    codigosAlojamientos = new string[capacidadAlojamientos];
-    for (int i = 0; i < cantidadAlojamientos; ++i)
-        codigosAlojamientos[i] = codigos[i];
+    // Copiar documento
+    int lenDoc = std::strlen(doc) + 1;
+    documento = (char*)std::malloc(lenDoc);         // std::malloc: reserva memoria en bytes
+    std::strcpy(documento, doc);
+
+    // Copiar password
+    int lenPwd = std::strlen(pwd) + 1;
+    password = (char*)std::malloc(lenPwd);
+    std::strcpy(password, pwd);
+
+    // Crear arreglo de punteros a cadenas para códigos
+    codigosAlojamientos = (char**)std::malloc(sizeof(char*) * capacidadAlojamientos);
+    for (int i = 0; i < cantidadAlojamientos; ++i) {
+        int len = std::strlen(codigos[i]) + 1;
+        codigosAlojamientos[i] = (char*)std::malloc(len);
+        std::strcpy(codigosAlojamientos[i], codigos[i]);
+    }
 }
 
+// Destructor: libera cada bloque de memoria
 Anfitrion::~Anfitrion() {
-    delete[] codigosAlojamientos;
+    // Liberar cadenas de códigos
+    for (int i = 0; i < cantidadAlojamientos; ++i) {
+        std::free(codigosAlojamientos[i]);
+    }
+    std::free(codigosAlojamientos);
+    // Liberar documento y password
+    std::free(documento);   // std::free: libera memoria reservada con std::malloc
+    std::free(password);
 }
 
-string Anfitrion::getDocumento() const { return documento; }
-int    Anfitrion::getAntiguedad() const { return antiguedad; }
-float  Anfitrion::getPuntuacion() const { return puntuacion; }
-string Anfitrion::getPassword() const  { return password; }  // ← impl.
+void Anfitrion::getDocumento(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", documento);  // std::snprintf: formatea seguro en buffer
+}
 
+int Anfitrion::getAntiguedad() const { return antiguedad; }
+float Anfitrion::getPuntuacion() const { return puntuacion; }
+
+void Anfitrion::getPassword(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", password);
+}
+
+void Anfitrion::agregarAlojamiento(const char* codigo) {
+    // Si lleno, duplicar capacidad
+    if (cantidadAlojamientos == capacidadAlojamientos) {
+        int nuevaCap = capacidadAlojamientos * 2;
+        // std::realloc: ajusta tamaño del bloque, conserva datos
+        codigosAlojamientos = (char**)std::realloc(codigosAlojamientos, sizeof(char*) * nuevaCap);
+        capacidadAlojamientos = nuevaCap;
+    }
+    // Copiar nuevo código
+    int len = std::strlen(codigo) + 1;
+    codigosAlojamientos[cantidadAlojamientos] = (char*)std::malloc(len);
+    std::strcpy(codigosAlojamientos[cantidadAlojamientos], codigo);
+    cantidadAlojamientos++;
+}
 
 void Anfitrion::mostrarAlojamientos() const {
-    cout << "Alojamientos del anfitrión " << documento << ":\n";
-    for (int i = 0; i < cantidadAlojamientos; ++i)
-        cout << "  - " << codigosAlojamientos[i] << "\n";
-}
-//mostrar alojamientos con sus reservas
-
-void Anfitrion::mostrarAlojamientosYReservas(Alojamiento** todosAlojamientos,
-                                             int cantidadTotal) const
-{
-    cout << "=== Alojamientos de " << documento
-         << " (puntuación " << puntuacion << ") ===\n";
-
-    // Por cada código que administra este anfitrión
-    for (int k = 0; k < cantidadAlojamientos; ++k) {
-        const string& cod = codigosAlojamientos[k];
-
-        // Buscar en el array global el objeto Alojamiento*
-        for (int i = 0; i < cantidadTotal; ++i) {
-            if (todosAlojamientos[i]->getCodigo() == cod) {
-                Alojamiento* alo = todosAlojamientos[i];
-                cout << "- " << alo->getCodigo()
-                     << ": " << alo->getNombre() << "\n";
-                // Delegamos a Alojamiento sus reservas
-                alo->mostrarReservas();
-                break;
-            }
-        }
+    char docBuf[64];
+    std::snprintf(docBuf, sizeof(docBuf), "%s", documento);
+    std::printf("Alojamientos de %s:\n", docBuf);
+    for (int i = 0; i < cantidadAlojamientos; ++i) {
+        std::printf("  - %s\n", codigosAlojamientos[i]);
     }
-    cout << "----------------------------------------\n";
 }
 
-void Anfitrion::anularReservacion(const string& codigoReserva,
-                                  Alojamiento** todosAloj,
-                                  int cantidadAloj) const
-{
+void Anfitrion::anularReservacion(const char* codigoReserva, Alojamiento** todosAlojs, int total) const {
     bool encontrado = false;
-
-    // Recorro cada código de alojamiento que maneja este anfitrión
     for (int k = 0; k < cantidadAlojamientos && !encontrado; ++k) {
-        const string& codAloj = codigosAlojamientos[k];
-
-        // Busco el objeto Alojamiento* en el array global
-        for (int i = 0; i < cantidadAloj; ++i) {
-            if (todosAloj[i]->getCodigo() == codAloj) {
-                // Intento anular la reserva dentro del Alojamiento
-                todosAloj[i]->anularReserva(codigoReserva);
+        for (int i = 0; i < total; ++i) {
+            char aloCod[64];
+            todosAlojs[i]->getCodigo(aloCod, sizeof(aloCod));
+            if (std::strcmp(aloCod, codigosAlojamientos[k]) == 0) {
+                // Alojamiento gestiona la anulación
+                todosAlojs[i]->anularReserva(codigoReserva);
                 encontrado = true;
                 break;
             }
         }
     }
-
     if (encontrado) {
-        cout << "Reserva \"" << codigoReserva
-             << "\" anulada correctamente.\n";
+        std::printf("Reserva '%s' anulada correctamente.\n", codigoReserva);
     } else {
-        cout << "No se encontró la reserva \"" << codigoReserva
-             << "\" en ninguno de tus alojamientos.\n";
+        std::printf("No se encontró la reserva '%s' en tus alojamientos.\n", codigoReserva);
     }
 }
+void Anfitrion::mostrarAlojamientosYReservas(
+    Alojamiento** todosAlojs,
+    int           total,
+    bool          historicas
+    ) const {
+    char docBuf[64];
+    getDocumento(docBuf, sizeof(docBuf));
+    printf("=== %s de %s (puntuación: %.2f) ===\n",
+           historicas ? "Reservas históricas" : "Reservas vigentes",
+           docBuf, puntuacion);
+
+    // Recorremos TODOS los alojamientos de la plataforma...
+    for (int i = 0; i < total; ++i) {
+        Alojamiento* al = todosAlojs[i];
+        // ...pero solo mostramos los que son de este anfitrión:
+        if (al->getAnfitrion() != this) continue;
+
+        char codAl[64], nomAl[128];
+        al->getCodigo(codAl, sizeof(codAl));
+        al->getNombre(nomAl, sizeof(nomAl));
+        printf("- %s: %s\n", codAl, nomAl);
+
+        if (!historicas) {
+            // Reservas vigentes ya vinculadas al alojamiento
+            al->mostrarReservas();
+        } else {
+            // Recorremos el arreglo global de históricas
+            int mostradas = 0;
+            for (int r = 0; r < cantidadHistoricas; ++r) {
+                Reservacion* res = reservasHistoricas[r];
+                if (!res) continue;
+                // Solo las que pertenezcan a este anfitrión
+                if (res->getAlojamiento()->getAnfitrion() != this) continue;
+                char resumen[128];
+                res->toResumen(resumen, sizeof(resumen));
+                printf("    - %s\n", resumen);
+                ++mostradas;
+            }
+            if (mostradas == 0) {
+                printf("    (sin reservas históricas)\n");
+            }
+        }
+    }
+    printf("----------------------------------------\n");
+}
+

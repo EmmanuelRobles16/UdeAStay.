@@ -1,92 +1,129 @@
 #include "Alojamiento.h"
-#include "Reservacion.h"
-#include <iostream>
 
-// Constructor
-Alojamiento::Alojamiento(const string& codigo, const string& nombre, const string& tipo, const string& direccion, const string& departamento, const string& municipio, float precioPorNoche, string* amenidadesArr, int cantidadAmenArr, Anfitrion* anfitrion)
-    : codigo(codigo),
-    nombre(nombre),
-    tipo(tipo),
-    direccion(direccion),
-    departamento(departamento),
-    municipio(municipio),
-    precioPorNoche(precioPorNoche),
-    cantidadAmenidades(cantidadAmenArr),
-    cantidadReservas(0),
-    capacidadReservas(5),
-    anfitrion(anfitrion)
+// Helper para copiar cadena C a memoria dinámica
+static char* dupCadena(const char* src) {
+    int len = std::strlen(src) + 1;              // std::strlen obtiene longitud sin '\0'
+    char* dst = (char*)std::malloc(len);        // Reserva len bytes
+    std::strcpy(dst, src);                      // Copia incluyendo '\0'
+    return dst;
+}
+
+// Constructor: copia todos los campos y crea arreglos
+Alojamiento::Alojamiento(const char* cod, const char* nom, const char* tip, const char* dir, const char* depto, const char* muni, float precio, char** amenArr, int cantAmen, Anfitrion* Anf)
+    : cantidadAmenidades(cantAmen), cantidadReservas(0), capacidadReservas(5), anfitrion(Anf)
 {
-    // Copiar amenidades
-    amenidades = new string[cantidadAmenidades];
+    // Copiar cadenas con dupCadena (usa malloc y strcpy)
+    codigo      = dupCadena(cod);
+    nombre      = dupCadena(nom);
+    tipo        = dupCadena(tip);
+    direccion   = dupCadena(dir);
+    departamento = dupCadena(depto);
+    municipio   = dupCadena(muni);
+    precioPorNoche = precio;
+
+    // Crear arreglo de amenidades y copiar cada cadena
+    amenidades = (char**)std::malloc(sizeof(char*) * cantidadAmenidades);
     for (int i = 0; i < cantidadAmenidades; ++i) {
-        amenidades[i] = amenidadesArr[i];
+        amenidades[i] = dupCadena(amenArr[i]);
     }
 
-    // Inicializar lista de reservas
-    reservas = new Reservacion*[capacidadReservas];
+    // Inicializar arreglo de reservas con malloc
+    reservas = (Reservacion**)std::malloc(sizeof(Reservacion*) * capacidadReservas);
 }
 
-// Destructor
+// Destructor: libera amenidades, reservas y cadenas
 Alojamiento::~Alojamiento() {
-    delete[] amenidades;
-    delete[] reservas;
+    // Liberar amenidades
+    for (int i = 0; i < cantidadAmenidades; ++i) {
+        std::free(amenidades[i]);                  // free libera malloc
+    }
+    std::free(amenidades);
+
+    // Liberar reservas array (no libera objetos Reservacion)
+    std::free(reservas);
+
+    // Liberar cadenas básicas
+    std::free(codigo);
+    std::free(nombre);
+    std::free(tipo);
+    std::free(direccion);
+    std::free(departamento);
+    std::free(municipio);
 }
 
-// Getters
-const string& Alojamiento::getCodigo() const { return codigo; }
-const string& Alojamiento::getNombre() const { return nombre; }
-const string& Alojamiento::getTipo() const { return tipo; }
-const string& Alojamiento::getDireccion() const { return direccion; }
-const string& Alojamiento::getDepartamento() const { return departamento; }
-const string& Alojamiento::getMunicipio() const { return municipio; }
-float Alojamiento::getPrecioPorNoche() const { return precioPorNoche; }
-Anfitrion* Alojamiento::getAnfitrion() const { return anfitrion; }
-string* Alojamiento::getAmenidades() const { return amenidades; }
-int Alojamiento::getCantidadAmenidades() const { return cantidadAmenidades; }
+// Getters: snprintf para copiar en buffer de tamaño bufSize
+void Alojamiento::getCodigo(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", codigo);
+}
+void Alojamiento::getNombre(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", nombre);
+}
+void Alojamiento::getTipo(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", tipo);
+}
+void Alojamiento::getDireccion(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", direccion);
+}
+void Alojamiento::getDepartamento(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", departamento);
+}
+void Alojamiento::getMunicipio(char* buffer, int bufSize) const {
+    std::snprintf(buffer, bufSize, "%s", municipio);
+}
+float Alojamiento::getPrecioPorNoche() const {
+    return precioPorNoche;
+}
+Anfitrion* Alojamiento::getAnfitrion() const {
+    return anfitrion;
+}
 
-//funcionalidad para mostrar reservas del alojamiento
-// ——— Reservas (semidinámico con indexación) ———————————————
+// Amenidades
+int Alojamiento::getCantidadAmenidades() const {
+    return cantidadAmenidades;
+}
+void Alojamiento::mostrarAmenidades() const {
+    printf("Amenidades (%d):\n", cantidadAmenidades);
+    for (int i = 0; i < cantidadAmenidades; ++i) {
+        printf("  - %s\n", amenidades[i]);
+    }
+}
 
+// Agrega reserva: duplica capacidad si es necesario
 void Alojamiento::agregarReserva(Reservacion* r) {
-    // 1) Si el array está lleno, duplicar capacidad
     if (cantidadReservas == capacidadReservas) {
         int nuevaCap = capacidadReservas * 2;
-        Reservacion** tmp = new Reservacion*[nuevaCap];
-        // copiar viejos punteros
-        for (int i = 0; i < cantidadReservas; ++i) {
-            tmp[i] = reservas[i];
-        }
-        delete[] reservas;
-        reservas = tmp;
+        // std::realloc ajusta tamaño del bloque, preserva datos previos
+        reservas = (Reservacion**)std::realloc(reservas, sizeof(Reservacion*) * nuevaCap);
         capacidadReservas = nuevaCap;
     }
-    // 2) Insertar al final
     reservas[cantidadReservas++] = r;
 }
 
-void Alojamiento::anularReserva(const string& codigoReserva) {
-    // Buscar la reserva en el array
+// Anular reserva por código: busca y desplaza elementos
+void Alojamiento::anularReserva(const char* codRes) {
+    char actual[64];
     for (int i = 0; i < cantidadReservas; ++i) {
-        if (reservas[i]->getCodigo() == codigoReserva) {
-            // desplazar todo hacia atrás para tapar el hueco
+        reservas[i]->getCodigo(actual, sizeof(actual));
+        // strcmp compara cadenas C, devuelve 0 si iguales
+        if (std::strcmp(actual, codRes) == 0) {
             for (int j = i; j < cantidadReservas - 1; ++j) {
                 reservas[j] = reservas[j + 1];
             }
-            --cantidadReservas;
+            cantidadReservas--;
             return;
         }
     }
-    // si no la encontró, no hace nada
 }
 
+// Mostrar reservas vigentes
 void Alojamiento::mostrarReservas() const {
     if (cantidadReservas == 0) {
-        std::cout << "    (no hay reservas vigentes)\n";
+        printf("    (no hay reservas vigentes)\n");
         return;
     }
     for (int i = 0; i < cantidadReservas; ++i) {
-        std::cout << "    - "
-                  << reservas[i]->getResumen()
-                  << "\n";
+        char resumen[128];
+        reservas[i]->toResumen(resumen, sizeof(resumen));
+        printf("    - %s\n", resumen);
     }
 }

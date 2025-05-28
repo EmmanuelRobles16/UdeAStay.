@@ -1,37 +1,47 @@
+// Anfitrion.h
 #ifndef ANFITRION_H
 #define ANFITRION_H
 
-#include <string>
-using namespace std;
-
-class Alojamiento;
+#include <cstdio>   // printf, snprintf
+#include <cstdlib>  // malloc, free, realloc
+#include <cstring>  // strlen, strcpy, strcmp
+#include "Alojamiento.h"
 
 class Anfitrion {
 private:
-    string documento;
-    int antiguedad;
-    float puntuacion;
-    string password;              // ← nuevo atributo
-    string* codigosAlojamientos;
-    int cantidadAlojamientos;
-    int capacidadAlojamientos;
+    char* documento;            // Cédula o pasaporte (cadena C)
+    int   antiguedad;           // Años en el sistema
+    float puntuacion;           // Rating acumulado
+    char* password;             // Contraseña (cadena C)
+
+    // Códigos de alojamientos gestionados por el anfitrión
+    char** codigosAlojamientos; // Arreglo de cadenas C dinámico
+    int    cantidadAlojamientos;// Número actual de códigos
+    int    capacidadAlojamientos;// Capacidad del arreglo
 
 public:
-    // Añadimos el parámetro pwd
-    Anfitrion(const string& doc, int antig, float punt,
-              const string& pwd, string* codigos, int numCodigos);
+    // Constructor y destructor
+    Anfitrion(const char* doc, int antig, float punt, const char* pwd,
+              const char** codigos, int numCodigos);
     ~Anfitrion();
 
-    string getDocumento() const;
-    int    getAntiguedad() const;
-    float  getPuntuacion() const;
-    string getPassword() const;   // ← nuevo getter
+    // Getters C-style
+    void  getDocumento(char* buffer, int bufSize) const;
+    int   getAntiguedad() const;
+    float getPuntuacion() const;
+    void  getPassword(char* buffer, int bufSize) const;
 
-    void agregarAlojamiento(const string& codigo);
+    // Gestión de alojamientos
+    void agregarAlojamiento(const char* codigo);
     void mostrarAlojamientos() const;
-    // Muestra alojamientos y sus reservas activas
-    void mostrarAlojamientosYReservas(Alojamiento** todos, int cantidadTodos) const;
-    void anularReservacion(const std::string& codigoReserva, Alojamiento** todosAloj, int cantidadAloj) const;
+
+    // Muestra alojamientos y sus reservas:
+    //   historicas=false → reservas vigentes
+    //   historicas=true  → reservas históricas
+    void mostrarAlojamientosYReservas(Alojamiento** todosAlojs, int total, bool historicas = false) const;
+
+    // Anula una reservación por código
+    void anularReservacion(const char* codigoReserva, Alojamiento** todosAlojs, int total) const;
 };
 
-#endif // ANFITRION_H
+#endif
