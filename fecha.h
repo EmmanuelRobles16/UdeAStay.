@@ -24,6 +24,8 @@ public:
     // Constructor por defecto y parametrizado
     Fecha(int d = 1, int m = 1, int a = 1970);
 
+    static Fecha hoy();
+
     // Validación de fecha
     bool validar() const;
 
@@ -48,6 +50,10 @@ public:
         const Fecha& inicio1, const Fecha& fin1,
         const Fecha& inicio2, const Fecha& fin2
         );
+
+    int getDia() const { return dia; }
+    int getMes() const { return mes; }
+    int getAnio() const { return anio; }
 };
 
 #endif

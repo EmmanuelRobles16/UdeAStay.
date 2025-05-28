@@ -5,6 +5,7 @@
 #include "Anfitrion.h"
 #include "Alojamiento.h"
 #include "Reservacion.h"
+#include "Fecha.h"
 #include <cstdio>   // printf, snprintf
 #include <cstdlib>  // malloc, free, realloc
 #include <cstring>  // strlen, strcmp
@@ -46,8 +47,16 @@ public:
     static void runMenuHuesped(
         Huesped* huesped,
         Reservacion** reservas, int cantidadRes,
-        Reservacion** historico, int cantidadHist
+        Reservacion** historico, int cantidadHist,
+        Alojamiento**   alojamientos,  int cantidadAl
         );
+
+    static void buscarAlojamientosDisponibles(Alojamiento** alojamientos, int cantidadAlojamientos,
+        const char* municipio,
+        const Fecha& fechaEntrada, int duracion
+        );
+    static void reservarAlojamiento(Huesped* huesped,  Reservacion**&  reservas,   int& cantidadRes, Alojamiento**   alojamientos, int cantidadAl);
 };
+
 
 #endif

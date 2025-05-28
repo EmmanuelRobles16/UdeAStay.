@@ -44,7 +44,8 @@ int main() {
     else if (res.tipo == TipoUsuario::Huesped) {
         plataforma.runMenuHuesped(res.huesped,
                                   reservasVigentes,   cantidadVigentes,
-                                  reservasHistoricas, cantidadHistoricas);
+                                  reservasHistoricas, cantidadHistoricas,
+                                  alojamientos,       cantAl);
     }
     else {
         std::printf("Acceso denegado o usuario no encontrado.\n");

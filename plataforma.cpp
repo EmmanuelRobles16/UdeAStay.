@@ -1,4 +1,9 @@
 #include "Plataforma.h"
+#include "Alojamiento.h"
+#include "Fecha.h"
+#include <cstdio>
+#include <cstring>
+
 extern Reservacion** reservasVigentes;
 extern int           cantidadVigentes;
 
@@ -126,10 +131,159 @@ void Plataforma::runMenuAnfitrion(
     } while (opc != 0);
 }
 
+void Plataforma::reservarAlojamiento(
+    Huesped*        huesped,
+    Reservacion**&  reservas,     int& cantidadRes,
+    Alojamiento**   alojamientos, int cantidadAl
+    ) {
+    char buf[256];
+
+    // 1) Criterios de búsqueda
+    char municipio[64];
+    printf("Municipio: ");
+    fgets(municipio, sizeof(municipio), stdin);
+    municipio[strcspn(municipio,"\r\n")] = '\0';
+
+    char fechaBuf[16];
+    printf("Fecha entrada (YYYY-MM-DD): ");
+    fgets(fechaBuf, sizeof(fechaBuf), stdin);
+    fechaBuf[strcspn(fechaBuf,"\r\n")] = '\0';
+    Fecha fechaEntrada = Fecha::fromShortString(fechaBuf);
+
+    char durBuf[8];
+    printf("Noches de estadía: ");
+    fgets(durBuf, sizeof(durBuf), stdin);
+    int duracion = atoi(durBuf);
+
+    // 2) Filtros opcionales
+    float maxPrecio = -1.0f;
+    printf("¿Filtro precio máximo por noche? (s/n): ");
+    fgets(buf,sizeof(buf),stdin);
+    if (buf[0]=='s'||buf[0]=='S') {
+        printf("Precio máximo: ");
+        fgets(buf,sizeof(buf),stdin);
+        maxPrecio = atof(buf);
+    }
+
+    float minPunt = -1.0f;
+    printf("¿Filtro puntuación mínima anfitrión? (s/n): ");
+    fgets(buf,sizeof(buf),stdin);
+    if (buf[0]=='s'||buf[0]=='S') {
+        printf("Puntuación mínima: ");
+        fgets(buf,sizeof(buf),stdin);
+        minPunt = atof(buf);
+    }
+
+    // 3) Listar candidatos
+    printf("\n--- Alojamientos disponibles ---\n");
+    Alojamiento** lista = nullptr;
+    int encontrados = 0, capacidad = 0;
+    for (int i = 0; i < cantidadAl; ++i) {
+        // municipio
+        char muniBuf[64]; alojamientos[i]->getMunicipio(muniBuf,sizeof(muniBuf));
+        if (strcmp(muniBuf,municipio)!=0) continue;
+        // disponibilidad
+        if (!alojamientos[i]->estaDisponible(fechaEntrada,duracion)) continue;
+        // precio
+        float p = alojamientos[i]->getPrecioPorNoche();
+        if (maxPrecio>=0 && p>maxPrecio) continue;
+        // puntuación
+        float pt = alojamientos[i]->getAnfitrion()->getPuntuacion();
+        if (minPunt>=0 && pt<minPunt) continue;
+        // añadir
+        if (encontrados==capacidad) {
+            capacidad = capacidad?capacidad*2:4;
+            lista = (Alojamiento**)realloc(lista,sizeof(Alojamiento*)*capacidad);
+        }
+        lista[encontrados++] = alojamientos[i];
+        // mostrar provisional
+        char cod[32];
+        alojamientos[i]->getCodigo(cod,sizeof(cod));
+        printf("%d) %s — %.2f por noche — Host: %.2f\n",
+               encontrados, cod, p, pt);
+    }
+    if (encontrados==0) {
+        printf("No hay alojamientos que cumplan esos criterios.\n\n");
+        free(lista);
+        return;
+    }
+
+    // 4) Selección
+    printf("Elige número (1-%d): ", encontrados);
+    fgets(buf,sizeof(buf),stdin);
+    int sel = atoi(buf);
+    if (sel<1 || sel>encontrados) {
+        printf("Selección inválida.\n\n");
+        free(lista);
+        return;
+    }
+    Alojamiento* elegido = lista[sel-1];
+    free(lista);
+
+    // 5) Datos de pago y anotación
+    char metodo[16], pagoBuf[16], anot[1001];
+    printf("Método de pago (PSE/TCrédito): ");
+    fgets(metodo,sizeof(metodo),stdin);
+    metodo[strcspn(metodo,"\r\n")] = '\0';
+    printf("Fecha pago (YYYY-MM-DD): ");
+    fgets(pagoBuf,sizeof(pagoBuf),stdin);
+    pagoBuf[strcspn(pagoBuf,"\r\n")] = '\0';
+    Fecha fechaPago = Fecha::fromShortString(pagoBuf);
+    printf("Anotaciones (hasta 1000 chars): ");
+    fgets(anot,sizeof(anot),stdin);
+    anot[strcspn(anot,"\r\n")] = '\0';
+
+    // 6) Código y monto
+    char codRes[16];
+    snprintf(codRes,sizeof(codRes),"R%03d",cantidadRes+1);
+    float monto = elegido->getPrecioPorNoche() * duracion;
+
+    // 7) Crear y almacenar en memoria
+    Reservacion* nueva = new Reservacion(
+        codRes, fechaEntrada, duracion,
+        metodo, fechaPago, monto, anot,
+        elegido, huesped
+        );
+    // global vigentes
+    if (cantidadRes==0 && reservas==nullptr) { /* nada */ }
+    {
+        int newCap = cantidadRes? cantidadRes*2:4;
+        reservas = (Reservacion**)realloc(reservas,sizeof(Reservacion*)*newCap);
+    }
+    reservas[cantidadRes++] = nueva;
+    // en alojamiento y huésped
+    elegido->agregarReserva(nueva);
+    huesped->agregarReserva(nueva);
+
+    // 8) Persistir
+    FILE* f = fopen("reservas_vigentes.txt","a");
+    if (f) {
+        char alo[32], doc[32];
+        elegido->getCodigo(alo,sizeof(alo));
+        huesped->getDocumento(doc,sizeof(doc));
+        fprintf(f,"%s|%s|%s|%04d-%02d-%02d|%d|%s|%04d-%02d-%02d|%.2f|%s\n",
+                codRes, alo, doc,
+                fechaEntrada.getAnio(),fechaEntrada.getMes(),fechaEntrada.getDia(),
+                duracion,
+                metodo,
+                fechaPago.getAnio(),fechaPago.getMes(),fechaPago.getDia(),
+                monto,
+                anot
+                );
+        fclose(f);
+    }
+
+    // 9) Comprobante
+    char comp[256];
+    nueva->toComprobante(comp,sizeof(comp));
+    printf("\n=== Reserva confirmada ===\n%s\n\n", comp);
+}
+
 void Plataforma::runMenuHuesped(
     Huesped*        huesped,
     Reservacion**   reservas,     int cantidadRes,
-    Reservacion**   historico,    int cantidadHist
+    Reservacion**   historico,    int cantidadHist,
+    Alojamiento**   alojamientos,  int cantidadAl
     ) {
     int opc = -1;
     char input[16];
@@ -138,10 +292,11 @@ void Plataforma::runMenuHuesped(
         printf("\n=== Menú Huésped ===\n");
         printf("1) Mostrar mis reservas activas\n");
         printf("2) Mostrar mis reservas históricas\n");
-        printf("3) Anular reserva\n");               // <– nueva línea
+        printf("3) Anular reserva\n");
+        printf("4) Reservar alojamiento\n");
         printf("0) Salir\n");
-        printf("Elige opción: ");
-        if (!fgets(input, sizeof(input), stdin)) break;
+        printf("Opción: ");
+        if (!fgets(input,sizeof(input),stdin)) break;
         opc = atoi(input);
 
         char docUsu[64];
@@ -187,7 +342,13 @@ void Plataforma::runMenuHuesped(
             }
             break;
         }
-
+        case 4:
+            Plataforma::reservarAlojamiento(
+                huesped,
+                reservas,    cantidadRes,
+                alojamientos, cantidadAl
+                );
+            break;
         case 0:
             printf("Cerrando sesión de huésped.\n");
             break;
@@ -199,6 +360,78 @@ void Plataforma::runMenuHuesped(
     } while (opc != 0);
 }
 
+void Plataforma::buscarAlojamientosDisponibles(
+    Alojamiento** alojamientos,
+    int           cantidadAl,
+    const char*   municipio,
+    const Fecha&  fechaEntrada,
+    int           duracion
+    ) {
+    // 1) Obtener la fecha de hoy
+    Fecha hoy = Fecha::hoy();
 
+    // 2) Validar que fechaEntrada sea válida y NO anterior a hoy
+    if (!fechaEntrada.validar() || fechaEntrada.esAnterior(hoy)) {
+        std::printf(
+            "❌ Fecha inválida: debe ser hoy (%04d-%02d-%02d) o posterior.\n",
+            hoy.getAnio(), hoy.getMes(), hoy.getDia()
+            );
+        return;
+    }
+
+    // 3) Calcular límite de 365 días desde fechaEntrada
+    Fecha tope = fechaEntrada;
+    tope.sumarDias(365);
+
+    std::printf(
+        "🔍 Disponibilidad en %s desde %04d-%02d-%02d por %d noches:\n",
+        municipio,
+        fechaEntrada.getAnio(), fechaEntrada.getMes(), fechaEntrada.getDia(),
+        duracion
+        );
+
+    bool alguno = false;
+
+    // 4) Recorrer todos los alojamientos
+    for (int i = 0; i < cantidadAl; ++i) {
+        // 4.1) Filtro por municipio
+        char muniBuf[64];
+        alojamientos[i]->getMunicipio(muniBuf, sizeof(muniBuf));
+        if (std::strcmp(muniBuf, municipio) != 0)
+            continue;
+
+        // 4.2) Comprobar que la fecha de salida no supere los 365 días
+        Fecha finReserva = fechaEntrada;
+        finReserva.sumarDias(duracion);
+        if (tope.esAnterior(finReserva))
+            continue;
+
+        // —— DEBUG ——
+        // Muestra para cada alojamiento si pasa la disponibilidad
+        char codDebug[32];
+        alojamientos[i]->getCodigo(codDebug, sizeof(codDebug));
+        int disp = alojamientos[i]->estaDisponible(fechaEntrada, duracion);
+        std::printf("DEBUG: probando %s → estaDisponible=%d\n", codDebug, disp);
+
+        // 4.3) Si no está disponible, lo descartamos
+        if (!disp)
+            continue;
+
+        // 4.4) Si llegó hasta aquí, imprimir el alojamiento libre
+        char cod[32], nom[128];
+        alojamientos[i]->getCodigo(cod, sizeof(cod));
+        alojamientos[i]->getNombre(nom, sizeof(nom));
+        std::printf(
+            "  • %s — %s (%.2f por noche)\n",
+            cod, nom,
+            alojamientos[i]->getPrecioPorNoche()
+            );
+        alguno = true;
+    }
+
+    if (!alguno) {
+        std::printf("😔 No hay alojamientos disponibles con esos criterios.\n");
+    }
+}
 
 

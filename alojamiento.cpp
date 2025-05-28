@@ -127,3 +127,41 @@ void Alojamiento::mostrarReservas() const {
         printf("    - %s\n", resumen);
     }
 }
+
+bool Alojamiento::estaDisponible(const Fecha& inicio, int duracion) const {
+    // Calcula fecha de fin
+    Fecha fin = inicio;
+    fin.sumarDias(duracion);
+
+    // DEBUG: muestra los parámetros de entrada
+    char cod[32];
+    getCodigo(cod, sizeof(cod));
+    printf(">>> DEBUG estaDisponible para %s: inicio=%04d-%02d-%02d, fin=%04d-%02d-%02d, dur=%d\n",
+           cod,
+           inicio.getAnio(), inicio.getMes(), inicio.getDia(),
+           fin.getAnio(),   fin.getMes(),   fin.getDia(),
+           duracion);
+
+    // Recorre las reservas vigentes de ESTE alojamiento
+    for (int i = 0; i < cantidadReservas; ++i) {
+        Fecha rIni = reservas[i]->getFechaEntrada();
+        Fecha rFin = reservas[i]->fechaSalida();
+
+        // DEBUG: muestra cada reserva y su solapamiento
+        printf("    Reserva[%d]: rangoGRES %04d-%02d-%02d → %04d-%02d-%02d  ",
+               i,
+               rIni.getAnio(), rIni.getMes(), rIni.getDia(),
+               rFin.getAnio(), rFin.getMes(), rFin.getDia());
+
+        bool cruzan = Fecha::seCruzanRangos(inicio, fin, rIni, rFin);
+        printf("seCruzanRangos=%d\n", cruzan);
+
+        if (cruzan) {
+            printf("    => DESCARTADO por solapamiento en %s\n", cod);
+            return false;
+        }
+    }
+
+    printf("    => %s está LIBRE en ese rango\n", cod);
+    return true;
+}

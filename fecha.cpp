@@ -1,6 +1,7 @@
 #include "fecha.h"
 #include <cstdio>   // sprintf
 #include <cstdlib>  // atoi, malloc/free si fuese necesario
+#include <ctime>
 
 // Definición de días por mes (no bisiesto)
 const int Fecha::diasMes[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
@@ -18,6 +19,12 @@ const char* Fecha::nombresMeses[12] = {
 Fecha::Fecha(int d, int m, int a)
     : dia(d), mes(m), anio(a) {}
 
+Fecha Fecha::hoy() {
+    std::time_t t = std::time(nullptr);
+    std::tm* lt  = std::localtime(&t);
+    // tm_mday: día, tm_mon+1: mes, tm_year+1900: año
+    return Fecha(lt->tm_mday, lt->tm_mon + 1, lt->tm_year + 1900);
+}
 // Verifica año bisiesto: divisible por 4, no por 100 a menos que sea por 400
 bool Fecha::esBisiesto(int a) {
     return (a % 4 == 0 && a % 100 != 0) || (a % 400 == 0);
@@ -103,9 +110,9 @@ void Fecha::toLongString(char* buffer) const {
 
 // Verifica si dos rangos de fechas se solapan
 bool Fecha::seCruzanRangos(
-    const Fecha& i1, const Fecha& f1,
-    const Fecha& i2, const Fecha& f2
+    const Fecha& inicio1, const Fecha& fin1,
+    const Fecha& inicio2, const Fecha& fin2
     ) {
-    // No se cruzan si fin1 < inicio2 o fin2 < inicio1
-    return !(f1.esAnterior(i2) || f2.esAnterior(i1));
+    // Solapan ⇔ (inicio1 < fin2) && (inicio2 < fin1)
+    return inicio1.esAnterior(fin2) && inicio2.esAnterior(fin1);
 }

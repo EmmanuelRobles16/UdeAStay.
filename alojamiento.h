@@ -54,6 +54,8 @@ public:
     void agregarReserva(Reservacion* r);
     void anularReserva(const char* codRes);
     void mostrarReservas() const;
+
+    bool estaDisponible(const Fecha& inicio, int duracion) const;
 };
 
 #endif
