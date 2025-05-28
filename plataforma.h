@@ -56,6 +56,7 @@ public:
         const Fecha& fechaEntrada, int duracion
         );
     static void reservarAlojamiento(Huesped* huesped,  Reservacion**&  reservas,   int& cantidadRes, Alojamiento**   alojamientos, int cantidadAl);
+    static void actualizarHistorico(Anfitrion* anfitrion, Reservacion**&  reservasVig, int& cantidadVig, Reservacion**&  reservasHist, int& cantidadHist);
 };
 
 

@@ -6,6 +6,8 @@
 
 extern Reservacion** reservasVigentes;
 extern int           cantidadVigentes;
+extern Reservacion** reservasHistoricas;
+extern int           cantidadHistoricas;
 
 ResultadoLogin Plataforma::autenticar(
     Huesped** huespedes, int cantidadHuespedes,
@@ -73,7 +75,9 @@ void Plataforma::runMenuAnfitrion(
         std::printf("3) Reservas históricas\n");
         std::printf("4) Anular reserva\n");
         std::printf("5) Consultar reservas por rango de fechas\n");
+        std::printf("6) Actualizar histórico\n");
         std::printf("0) Salir\n");
+        std::printf("Opción: ");
         if (!std::fgets(input, sizeof(input), stdin)) break;
         opc = std::atoi(input);
 
@@ -152,7 +156,13 @@ void Plataforma::runMenuAnfitrion(
                 hasta
                 );
             break;
-        }
+        }case 6:
+            actualizarHistorico(
+                anfitrion,
+                reservasVigentes,   cantidadVigentes,
+                reservasHistoricas, cantidadHistoricas
+                );
+            break;
         case 0:
             std::printf("Saliendo menú anfitrión.\n");
             break;
@@ -161,6 +171,146 @@ void Plataforma::runMenuAnfitrion(
             std::printf("Opción inválida.\n");
         }
     } while (opc != 0);
+}
+
+void Plataforma::actualizarHistorico(
+    Anfitrion*  anfitrion,
+    Reservacion**&  reservasVig,     int& cantidadVig,
+    Reservacion**&  reservasHist,    int& cantidadHist
+    ) {
+    // 1) Leer fecha de corte
+    char buf[16];
+    printf("Fecha de corte (YYYY-MM-DD): ");
+    if (!fgets(buf, sizeof(buf), stdin)) return;
+    buf[strcspn(buf, "\r\n")] = '\0';
+    Fecha corte = Fecha::fromShortString(buf);
+
+    // 2) Validar que corte ≥ última histórica
+    Fecha ultimaHist = corte;
+    if (cantidadHist > 0) {
+        // buscar la máxima fechaSalida en historico
+        ultimaHist = reservasHist[0]->fechaSalida();
+        for (int i = 1; i < cantidadHist; ++i) {
+            Fecha fS = reservasHist[i]->fechaSalida();
+            if (ultimaHist.esAnterior(fS))
+                ultimaHist = fS;
+        }
+    }
+    if (corte.esAnterior(ultimaHist)) {
+        printf("❌ Fecha de corte debe ser ≥ última histórica (%04d-%02d-%02d).\n",
+               ultimaHist.getAnio(), ultimaHist.getMes(), ultimaHist.getDia());
+        return;
+    }
+
+    // 3) Iterar sobre reservas vigentes y seleccionar a mover
+    Reservacion** nuevasVig = nullptr;
+    int nuevasCap = 0, nuevasCnt = 0;
+    Reservacion** moved   = nullptr;
+    int movedCap = 0, movedCnt = 0;
+
+    for (int i = 0; i < cantidadVig; ++i) {
+        Reservacion* r = reservasVig[i];
+        Fecha fSal    = r->fechaSalida();
+
+        if (fSal.esAnterior(corte)) {
+            //  – A mover a histórico
+            if (movedCnt == movedCap) {
+                movedCap = movedCap? movedCap*2 : 4;
+                moved = (Reservacion**)std::realloc(moved,
+                                                      sizeof(Reservacion*) * movedCap);
+            }
+            moved[movedCnt++] = r;
+        } else {
+            //  – Queda en vigentes
+            if (nuevasCnt == nuevasCap) {
+                nuevasCap = nuevasCap? nuevasCap*2 : 4;
+                nuevasVig = (Reservacion**)std::realloc(nuevasVig,
+                                                          sizeof(Reservacion*) * nuevasCap);
+            }
+            nuevasVig[nuevasCnt++] = r;
+        }
+    }
+
+    // 4) Actualizar arrays en memoria
+    std::free(reservasVig);
+    reservasVig  = nuevasVig;
+    cantidadVig  = nuevasCnt;
+
+    // a) añadir moved[] a reservasHist
+    for (int i = 0; i < movedCnt; ++i) {
+        Reservacion* r = moved[i];
+        // append to historicas
+        if (cantidadHist && reservasHist == nullptr) cantidadHist = 0;
+        int newCap = cantidadHist? cantidadHist*2 : 4;
+        reservasHist = (Reservacion**)std::realloc(reservasHist,
+                                                     sizeof(Reservacion*) * newCap);
+        reservasHist[cantidadHist++] = r;
+    }
+    std::free(moved);
+
+    // 5) Apendea moved[] al archivo histórico
+    FILE* fHist = std::fopen("reservas_historico.txt", "a");
+    if (fHist) {
+        for (int i = 0; i < cantidadHist; ++i) {
+            Reservacion* r = reservasHist[i];
+            // Sólo apendeamos las recién movidas
+            // (su código comienza con R)
+            char cod[16], alo[32], hue[32], met[16], nota[1001];
+            r->getCodigo(cod, sizeof(cod));
+            r->getAlojamiento()->getCodigo(alo, sizeof(alo));
+            r->getHuesped()->getDocumento(hue, sizeof(hue));
+            Fecha fe = r->getFechaEntrada();
+            int dur = r->getDuracion();
+            r->getMetodoPago(met, sizeof(met));
+            Fecha fp = r->getFechaPago();
+            float monto = r->getMonto();
+            r->getAnotacion(nota, sizeof(nota));
+
+            std::fprintf(fHist,
+                         "%s|%s|%s|%04d-%02d-%02d|%d|%s|%04d-%02d-%02d|%.2f|%s\n",
+                         cod, alo, hue,
+                         fe.getAnio(), fe.getMes(), fe.getDia(),
+                         dur,
+                         met,
+                         fp.getAnio(), fp.getMes(), fp.getDia(),
+                         monto,
+                         nota
+                         );
+        }
+        std::fclose(fHist);
+    }
+
+    // 6) Reescribir el archivo de vigentes con reservasVig[]
+    FILE* fVig = std::fopen("reservas_vigentes.txt", "w");
+    if (fVig) {
+        for (int i = 0; i < cantidadVig; ++i) {
+            Reservacion* r = reservasVig[i];
+            char cod[16], alo[32], hue[32], met[16], nota[1001];
+            r->getCodigo(cod, sizeof(cod));
+            r->getAlojamiento()->getCodigo(alo, sizeof(alo));
+            r->getHuesped()->getDocumento(hue, sizeof(hue));
+            Fecha fe = r->getFechaEntrada();
+            int dur = r->getDuracion();
+            r->getMetodoPago(met, sizeof(met));
+            Fecha fp = r->getFechaPago();
+            float monto = r->getMonto();
+            r->getAnotacion(nota, sizeof(nota));
+
+            std::fprintf(fVig,
+                         "%s|%s|%s|%04d-%02d-%02d|%d|%s|%04d-%02d-%02d|%.2f|%s\n",
+                         cod, alo, hue,
+                         fe.getAnio(), fe.getMes(), fe.getDia(),
+                         dur,
+                         met,
+                         fp.getAnio(), fp.getMes(), fp.getDia(),
+                         monto,
+                         nota
+                         );
+        }
+        std::fclose(fVig);
+    }
+
+    printf("✅ Histórico actualizado: %d movidas.\n", movedCnt);
 }
 
 void Plataforma::reservarAlojamiento(
