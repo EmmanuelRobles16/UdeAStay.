@@ -107,9 +107,9 @@ void Plataforma::runMenuAnfitrion(
 }
 
 void Plataforma::runMenuHuesped(
-    Huesped* huesped,
-    Reservacion** reservas, int cantidadRes,
-    Reservacion** historico, int cantidadHist
+    Huesped*        huesped,
+    Reservacion**   reservas,     int cantidadRes,
+    Reservacion**   historico,    int cantidadHist
     ) {
     int opc = -1;
     char input[16];
@@ -118,9 +118,9 @@ void Plataforma::runMenuHuesped(
         printf("\n=== Menú Huésped ===\n");
         printf("1) Mostrar mis reservas activas\n");
         printf("2) Mostrar mis reservas históricas\n");
+        printf("3) Anular reserva\n");               // <– nueva línea
         printf("0) Salir\n");
         printf("Elige opción: ");
-
         if (!fgets(input, sizeof(input), stdin)) break;
         opc = atoi(input);
 
@@ -132,15 +132,14 @@ void Plataforma::runMenuHuesped(
             printf("\n>> Tus reservas activas:\n");
             int count = 0;
             for (int i = 0; i < cantidadRes; ++i) {
-                if (reservas && reservas[i] && reservas[i]->esDelHuesped(docUsu)) {
+                if (reservas[i] && reservas[i]->esDelHuesped(docUsu)) {
                     char resumen[128];
                     reservas[i]->toResumen(resumen, sizeof(resumen));
                     printf("  - %s\n", resumen);
                     count++;
                 }
             }
-            if (count == 0)
-                printf("  (no tienes reservas activas)\n");
+            if (count == 0) printf("  (no tienes reservas activas)\n");
             break;
         }
 
@@ -148,20 +147,29 @@ void Plataforma::runMenuHuesped(
             printf("\n>> Tus reservas históricas:\n");
             int count = 0;
             for (int i = 0; i < cantidadHist; ++i) {
-                if (historico && historico[i] && historico[i]->esDelHuesped(docUsu)) {
+                if (historico[i] && historico[i]->esDelHuesped(docUsu)) {
                     char resumen[128];
                     historico[i]->toResumen(resumen, sizeof(resumen));
                     printf("  - %s\n", resumen);
                     count++;
                 }
             }
-            if (count == 0)
-                printf("  (no tienes reservas históricas)\n");
+            if (count == 0) printf("  (no tienes reservas históricas)\n");
+            break;
+        }
+
+        case 3: {  // <-- nueva opción
+            char codRes[64];
+            printf("Código de reserva a anular: ");
+            if (fgets(codRes, sizeof(codRes), stdin)) {
+                codRes[strcspn(codRes, "\r\n")] = '\0';
+                huesped->anularReservacion(codRes, reservas, cantidadRes);
+            }
             break;
         }
 
         case 0:
-            printf("Cerrando sesión de huésped...\n");
+            printf("Cerrando sesión de huésped.\n");
             break;
 
         default:

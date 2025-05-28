@@ -33,6 +33,11 @@ public:
 
     // Añadir una Reservacion*
     void agregarReserva(Reservacion* r);
+    /**
+     * Anula una reserva activa:
+     *  - La quita del arreglo interno del huésped. - La quita del arreglo global de reservas vigentes.  - Reescribe el archivo "reservas_vigentes.txt" excluyendo dicha línea.
+     */
+    void anularReservacion(const char* codigoReserva, Reservacion**& reservasGlobal, int& cantidadGlobal);
 };
 
 #endif
