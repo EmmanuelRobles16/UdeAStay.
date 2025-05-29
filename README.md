@@ -100,3 +100,57 @@ Se logró modelar correctamente el comportamiento de un sistema de reservas real
 El diseño centrado en la clase Menu como controlador permitió simplificar el flujo del sistema y separar responsabilidades, mientras que el uso de esquemas de memoria y métodos dedicados por clase facilitó la depuración y extensibilidad del proyecto.
 
 En resumen, el proyecto permitió fortalecer habilidades esenciales en programación de sistemas estructurados, fomentando buenas prácticas de diseño, lógica algorítmica clara y un enfoque disciplinado en el desarrollo de software modular y escalable.
+
+
+# Problemas enfrentados y las soluciones que se usaron
+
+Problema: Rutas de archivos / apertura fallida
+Solución: Se corrigió usando rutas relativas correctas o copiando los .txt al directorio de ejecución; además, se hizo debug en Qt para identificar dónde buscaba realmente los archivos.
+
+Problema: Las reservas no aparecían en los alojamientos
+Solución: Justo tras cargar cada reserva en el array global, se agregó alojamiento->agregarReserva(res) y huesped->agregarReserva(res) para poblar sus listas internas y que mostrarReservas() ya no devolviera “sin reservas”.
+
+Problema: Método faltante en Huesped
+Solución: Se añadió en Huesped la estructura semidinámica y la definición de agregarReserva(...), igual que en Alojamiento, para evitar el “undefined reference” al linkar.
+
+Problema: Excepciones std::invalid_argument con stoi/stof
+Solución: Se implementaron funciones trim y validaciones de formato antes de llamar a stoi/stof, eliminando espacios y caracteres invisibles en los tokens.
+
+Problema: Sincronización entre estructuras y archivos
+Solución: Tras anular una reserva en memoria, se reescribe el fichero reservas_vigentes.txt usando un archivo temporal que excluye la reserva cancelada, garantizando coherencia.
+
+Problema: Autenticación con contraseña
+Solución: Se extendieron Huesped y Anfitrion para almacenar y verificar la contraseña en autenticar, corrigiendo el fallo de login.
+
+Problema: Desbordamientos y residuos de búfer en lecturas (scanf/fgets)
+Solución: Se añadió getchar() después de cada scanf y se aplicó strcspn tras fgets para limpiar el buffer y evitar lecturas parciales o sobrantes.
+
+Problema: Validación de fechas y rangos
+Solución: Se implementó el intercambio automático de fecha de inicio y fin cuando el usuario se equivoca, y se añadieron cheques de rango (no antes de hoy, ni más de 12 meses) para robustecer la lógica.
+
+Problema: Gestión de memoria dinámica en C
+Solución: Se auditó todo malloc/realloc y destructores, corrigiendo fugas y accesos tras liberación, asegurando que no quedaran punteros colgantes ni duplicaciones.
+
+Problema: Uso involuntario de STL
+Solución: Se reemplazaron std::string, std::vector y flujos C++ por cadenas C (char*), malloc/free, strcpy/strcmp, printf/scanf, etc., respetando la restricción de no usar STL.
+
+Problema: Errores de “incomplete type” al compilar reservacion.cpp
+Solución: Se descartó esa vía de trabajo y no se aplicó inclusión de headers; se optó por otras estrategias.
+
+Problema: “Undefined reference” al linkear Archivos.cpp
+Solución: Se descartó el uso de guardas condicionales (#ifdef ARCHIVOS_CPP) y se dejó el .cpp sin macros para que se compilara normalmente.
+
+Problema: Desbordamientos en tokenización con strtok
+Solución: Se cambió la llamada a strtok usando un array temporal char delimStr[2] = { delimitador, '\0' }; como delimitador, evitando accesos fuera de rango.
+
+Problema: Saltos de línea (\n/\r\n) sobrantes en tokens
+Solución: Se creó y aplicó trimNewline(char* s) tras cada fgets para eliminar los fines de línea antes de comparar los tokens.
+
+Problema: Firma de constructor de Huesped/Anfitrion no coincidía
+Solución: Se redefinieron sus constructores para aceptar const char* y copiar internamente con malloc/strcpy, adaptando la carga sin usar STL.
+
+Problema: Warnings de “unused parameter” en cargarReservasHistoricas
+Solución: Se silenciaron con (void)param; al inicio de la función para marcar explícitamente que esos parámetros no se usan.
+
+Problema: Manejo de arreglos dinámicos e índices
+Solución: Se unificó el uso de idx como contador/índice para la inserción y, al final, se asigna su valor a la variable cantidad, clarificando la lógica.
