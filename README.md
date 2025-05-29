@@ -154,3 +154,31 @@ Solución: Se silenciaron con (void)param; al inicio de la función para marcar 
 
 Problema: Manejo de arreglos dinámicos e índices
 Solución: Se unificó el uso de idx como contador/índice para la inserción y, al final, se asigna su valor a la variable cantidad, clarificando la lógica.
+
+
+
+# UML relaciones 
+
+https://lucid.app/lucidchart/b79ff71d-8377-46c2-be9c-7a2deb7e480e/edit?viewport_loc=-2014%2C-3514%2C8454%2C3585%2C0_0&invitationId=inv_6da36ec1-503d-4b55-a2b0-493d0120fcee
+
+
+Asociación entre Huesped y Reservacion
+
+Agregación entre Anfitrion y Alojamiento
+
+Asociación entre Alojamiento y Reservacion
+
+Composición entre Reservacion y Fecha
+
+Agregación (contención) entre Plataforma y Huesped
+
+Agregación (contención) entre Plataforma y Anfitrion
+
+Agregación (contención) entre Plataforma y Alojamiento
+
+Agregación (contención) entre Plataforma y Reservacion
+
+Dependencia entre Menu y Plataforma
+
+Dependencia entre Archivos y las clases de datos (Huesped, Anfitrion, Alojamiento, Reservacion)
+
